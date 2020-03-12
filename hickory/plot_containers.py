@@ -221,6 +221,32 @@ class Plot(object):
                 dpi=dpi,
             )
 
+    def show(self, dpi=150):
+        """
+        show the plot on the screen.
+
+        The plot is written to a png file and shown using the
+        configured image viewer (currently hardcoded as feh)
+        """
+
+        with tempfile.TemporaryDirectory() as tdir:
+
+            pdf_file = os.path.join(tdir, 'hickory-plot.pdf')
+            png_file = pdf_file.replace('.pdf', '.png')
+            self._write_pdf(pdf_file)
+
+            _pdf_to_png(
+                png_file=png_file,
+                pdf_file=pdf_file,
+                dpi=dpi,
+            )
+
+            command = 'feh %s &' % png_file
+            os.system(command)
+
+            import time
+            time.sleep(1)
+
     @property
     def units(self):
         return self._units
@@ -385,6 +411,26 @@ def _pdf_to_png(*, png_file, pdf_file, dpi):
     ]
     command = ' '.join(command) + ' > /dev/null'
     os.system(command)
+
+
+def _show_png(*, pdf_file, dpi):
+    # for jpg, use device jpg
+    command = [
+        'gs',
+        '-dTextAlphaBits=4',
+        '-dGraphicsAlphaBits=4',
+        '-dSAFER',
+        '-dBATCH',
+        '-dNOPAUSE',
+        '-r%d' % dpi,
+        '-sDEVICE=png16m',
+        '-sOutputFile=-',
+        '%s' % pdf_file,
+    ]
+    command = ' '.join(command) + ' 2> /dev/null | feh &'
+    print(command)
+    # command = ' '.join(command) + ' | feh &'
+    # os.system(command)
 
 
 def test():
