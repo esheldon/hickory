@@ -115,85 +115,20 @@ class Plot(object):
 
     def add(self, *args):
         """
-        add an object to the plot
+        add object(s) to the plot
+
+        Parameters
+        ----------
+        args: objects to add
+            Can be, e.g. Points or Functions, or you can send lists of those
         """
         for arg in args:
-            self._contents.append(arg)
-
-    @property
-    def units(self):
-        return self._units
-
-    @units.setter
-    def units(self, units):
-        assert units in [
-            'cm', 'mm', 'in',
-        ]
-        self._units = units
-
-    @property
-    def height(self):
-        height = self._height
-        if height is None:
-            if self.width is not None and self.ratio is not None:
-                height = self.width/self.ratio
-
-        return height
-
-    @height.setter
-    def height(self, height):
-        self._height = height
-
-    @property
-    def legend_style(self):
-        return self._legend_style
-
-    @legend_style.setter
-    def legend_style(self, legend_style):
-        if isinstance(legend_style, (tuple, list)):
-            legend_style = ', '.join(legend_style)
-        self._legend_style = legend_style
-
-    @property
-    def axis_options(self):
-
-        options = []
-        options.append('axis on top')
-
-        if self.nminor_ticks is not None:
-            options.append('minor tick num=%d' % self.nminor_ticks)
-
-        width = self.width
-        if width is not None:
-            widthstr = '%g%s' % (width, self.units)
-            options.append('width=%s' % widthstr)
-
-        height = self.height
-        if height is not None:
-            heightstr = '%g%s' % (height, self.units)
-            options.append('height=%s' % heightstr)
-
-        options.append('scale only axis')
-
-        if self.xmin is not None:
-            options.append('xmin=%g' % self.xmin)
-        if self.xmax is not None:
-            options.append('xmax=%g' % self.xmax)
-        if self.ymin is not None:
-            options.append('ymin=%g' % self.ymin)
-        if self.ymax is not None:
-            options.append('ymax=%g' % self.ymax)
-        if self.xlabel is not None:
-            options.append('xlabel={%s}' % self.xlabel)
-        if self.ylabel is not None:
-            options.append('ylabel={%s}' % self.ylabel)
-
-        if self.legend_pos is not None:
-            options.append('legend pos=%s' % self.legend_pos)
-        if self.legend_style is not None:
-            options.append('legend style={%s}' % self.legend_style)
-
-        return ',\n      '.join(options)
+            if isinstance(arg, (list, tuple)):
+                for targ in arg:
+                    self.add(targ)
+            else:
+                assert isinstance(arg, (Points, Function))
+                self._contents.append(arg)
 
     def write(self, fname, dpi=150):
         """
@@ -285,6 +220,81 @@ class Plot(object):
                 png_file=png_file,
                 dpi=dpi,
             )
+
+    @property
+    def units(self):
+        return self._units
+
+    @units.setter
+    def units(self, units):
+        assert units in [
+            'cm', 'mm', 'in',
+        ]
+        self._units = units
+
+    @property
+    def height(self):
+        height = self._height
+        if height is None:
+            if self.width is not None and self.ratio is not None:
+                height = self.width/self.ratio
+
+        return height
+
+    @height.setter
+    def height(self, height):
+        self._height = height
+
+    @property
+    def legend_style(self):
+        return self._legend_style
+
+    @legend_style.setter
+    def legend_style(self, legend_style):
+        if isinstance(legend_style, (tuple, list)):
+            legend_style = ', '.join(legend_style)
+        self._legend_style = legend_style
+
+    @property
+    def axis_options(self):
+
+        options = []
+        options.append('axis on top')
+
+        if self.nminor_ticks is not None:
+            options.append('minor tick num=%d' % self.nminor_ticks)
+
+        width = self.width
+        if width is not None:
+            widthstr = '%g%s' % (width, self.units)
+            options.append('width=%s' % widthstr)
+
+        height = self.height
+        if height is not None:
+            heightstr = '%g%s' % (height, self.units)
+            options.append('height=%s' % heightstr)
+
+        options.append('scale only axis')
+
+        if self.xmin is not None:
+            options.append('xmin=%g' % self.xmin)
+        if self.xmax is not None:
+            options.append('xmax=%g' % self.xmax)
+        if self.ymin is not None:
+            options.append('ymin=%g' % self.ymin)
+        if self.ymax is not None:
+            options.append('ymax=%g' % self.ymax)
+        if self.xlabel is not None:
+            options.append('xlabel={%s}' % self.xlabel)
+        if self.ylabel is not None:
+            options.append('ylabel={%s}' % self.ylabel)
+
+        if self.legend_pos is not None:
+            options.append('legend pos=%s' % self.legend_pos)
+        if self.legend_style is not None:
+            options.append('legend style={%s}' % self.legend_style)
+
+        return ',\n      '.join(options)
 
     def _write_pdf(self, fname):
         """
