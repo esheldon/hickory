@@ -235,6 +235,27 @@ class Plot(object):
         configured image viewer (currently hardcoded as feh)
         """
 
+        with tempfile.TemporaryDirectory() as tdir:
+            pdf_file = tempfile.mktemp(
+                dir=tdir,
+                prefix='hickory-plot-',
+                suffix='.pdf',
+            )
+            self._write_pdf(pdf_file)
+
+            _show_pdf(
+                pdf_file=pdf_file,
+                dpi=dpi,
+            )
+
+    def show_old(self, dpi=150):
+        """
+        show the plot on the screen.
+
+        The plot is written to a png file and shown using the
+        configured image viewer (currently hardcoded as feh)
+        """
+
         pdf_file = tempfile.mktemp(
             dir=TMPDIR.name,
             prefix='hickory-plot-',
@@ -251,6 +272,7 @@ class Plot(object):
 
         command = 'feh %s &' % png_file
         os.system(command)
+
 
     @property
     def units(self):
@@ -418,22 +440,71 @@ def _pdf_to_png(*, png_file, pdf_file, dpi):
     os.system(command)
 
 
-def _show_png(*, pdf_file, dpi):
+def _show_pdf(*, pdf_file, dpi):
     # for jpg, use device jpg
+    import subprocess
     command = [
         'gs',
+        '-q',
         '-dTextAlphaBits=4',
         '-dGraphicsAlphaBits=4',
         '-dSAFER',
         '-dBATCH',
         '-dNOPAUSE',
+        # '-dNOPROMPT',
         '-r%d' % dpi,
         '-sDEVICE=png16m',
         '-sOutputFile=-',
+        pdf_file,
+    ]
+    cmd = 'gs -q -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dSAFER -dBATCH -dNOPAUSE -r200 -sDEVICE=png16m -sOutputFile=- %s | feh - &' % pdf_file
+    os.system(cmd)
+
+    '''
+    # print(pdf_file)
+    # subprocess.Popen(command)
+    # stop
+    pipe = subprocess.Popen(command, stdout=subprocess.PIPE)
+    pipe2 = subprocess.Popen(
+        ('feh','-'),
+        stdin=pipe.stdout,
+    )
+    import time
+    time.sleep(1)
+    # command = ' '.join(command) + ' 2> /dev/null | feh &'
+    # command = ' '.join(command) + ' 2> /dev/null | feh - &'
+    # print(command)
+    # command = ' '.join(command) + ' | feh &'
+    # os.system(command)
+    '''
+
+
+def _show_pdf_gs(*, pdf_file, dpi):
+    # for jpg, use device jpg
+    import subprocess
+    command = [
+        'gs',
+        '-q',
+        # '-dTextAlphaBits=4',
+        # '-dGraphicsAlphaBits=4',
+        '-dSAFER',
+        '-dBATCH',
+        '-dNOPAUSE',
+        # '-r%d' % dpi,
+        #'-sDEVICE=png16m',
+        #'-sOutputFile=-',
         '%s' % pdf_file,
     ]
-    command = ' '.join(command) + ' 2> /dev/null | feh &'
-    print(command)
+
+    # pipe = subprocess.Popen(command, stdout=subprocess.PIPE)
+    pipe = subprocess.Popen(command)
+
+    #pipe2 = subprocess.Popen(
+    #    ('feh', ),
+    #    stdin=pipe.stdout,
+    #)
+    # command = ' '.join(command) + ' 2> /dev/null | feh &'
+    # print(command)
     # command = ' '.join(command) + ' | feh &'
     # os.system(command)
 
