@@ -6,6 +6,12 @@ from .data_containers import (
     Function,
 )
 
+# we need a place to keep temporary image files for the show command, that will
+# last the lifetime of the session but be cleaned up after session end.  This
+# avoids race conditions using context managers
+
+TMPDIR = tempfile.TemporaryDirectory()
+
 GOLDEN_RATIO = 1.618
 
 HEAD = r"""\documentclass{standalone}
@@ -229,23 +235,22 @@ class Plot(object):
         configured image viewer (currently hardcoded as feh)
         """
 
-        with tempfile.TemporaryDirectory() as tdir:
+        pdf_file = tempfile.mktemp(
+            dir=TMPDIR.name,
+            prefix='hickory-plot-',
+            suffix='.pdf',
+        )
+        png_file = pdf_file.replace('.pdf', '.png')
+        self._write_pdf(pdf_file)
 
-            pdf_file = os.path.join(tdir, 'hickory-plot.pdf')
-            png_file = pdf_file.replace('.pdf', '.png')
-            self._write_pdf(pdf_file)
+        _pdf_to_png(
+            png_file=png_file,
+            pdf_file=pdf_file,
+            dpi=dpi,
+        )
 
-            _pdf_to_png(
-                png_file=png_file,
-                pdf_file=pdf_file,
-                dpi=dpi,
-            )
-
-            command = 'feh %s &' % png_file
-            os.system(command)
-
-            import time
-            time.sleep(1)
+        command = 'feh %s &' % png_file
+        os.system(command)
 
     @property
     def units(self):
