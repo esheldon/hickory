@@ -1,2 +1,2 @@
 # hickory
-Plotting library using latex pgfplots as the backend
+Python plotting library using latex pgfplots as the backend
