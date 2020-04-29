@@ -35,7 +35,7 @@ def plot(
     if file is not None:
         plt.write(file, dpi=dpi)
 
-    if show:
+    elif show:
         plt.show(dpi=dpi, viewer=viewer)
 
     return plt
