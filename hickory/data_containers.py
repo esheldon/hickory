@@ -243,7 +243,9 @@ class Function(_PlotEntryContainer):
             assert isinstance(
                 domain, (tuple, list)
             ), "domain must be a tuple or list of length 2"
-            assert len(domain) == 2, "domain must be a tuple or list of length 2"
+            assert len(domain) == 2, (
+                "domain must be a tuple or list of length 2"
+            )
 
     @property
     def style(self):
