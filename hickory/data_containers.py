@@ -20,9 +20,8 @@ class _PlotEntryContainer(object):
     label: string
         A label for the legend
     """
-    def __init__(self,
-                 style=None,
-                 label=None):
+
+    def __init__(self, style=None, label=None):
 
         self.style = style
         self.label = label
@@ -34,7 +33,7 @@ class _PlotEntryContainer(object):
     @style.setter
     def style(self, style):
         if isinstance(style, (tuple, list)):
-            style = ', '.join(style)
+            style = ", ".join(style)
         self._style = style
 
     @property
@@ -48,10 +47,10 @@ class _PlotEntryContainer(object):
     @property
     def addplot_options(self):
         style = self.style
-        if style is not None and style != '':
-            style_options = '+[%s]' % style
+        if style is not None and style != "":
+            style_options = "+[%s]" % style
         else:
-            style_options = ''
+            style_options = ""
 
         return style_options
 
@@ -59,9 +58,9 @@ class _PlotEntryContainer(object):
     def legend_entry(self):
         label = self.label
         if label is None:
-            return ''
+            return ""
         else:
-            return r'\addlegendentry{%s}' % label
+            return r"\addlegendentry{%s}" % label
 
 
 class Points(_PlotEntryContainer):
@@ -95,29 +94,26 @@ class Points(_PlotEntryContainer):
     label: string
         A label for the legend
     """
-    def __init__(self,
-                 x,
-                 y,
-                 xerr=None,
-                 yerr=None,
-                 style=None,
-                 label=None):
+
+    def __init__(self, x, y, xerr=None, yerr=None, style=None, label=None):
 
         self._x = _make_array(x)
         self._y = _make_array(y)
-        assert self._x.size == self._y.size, 'x and y must be same size'
+        assert self._x.size == self._y.size, "x and y must be same size"
 
         self._xerr = xerr
         if self._xerr is not None:
             self._xerr = _make_array(self._xerr)
-            assert self._xerr.size == self._x.size,\
-                'values and x errors must be same size'
+            assert (
+                self._xerr.size == self._x.size
+            ), "values and x errors must be same size"
 
         self._yerr = yerr
         if self._yerr is not None:
             self._yerr = _make_array(self._yerr)
-            assert self._yerr.size == self._x.size, \
-                'values and y errors must be same size'
+            assert (
+                self._yerr.size == self._x.size
+            ), "values and y errors must be same size"
 
         super().__init__(style=style, label=label)
 
@@ -131,14 +127,14 @@ class Points(_PlotEntryContainer):
             style = [style]
 
         if self._yerr is not None or self._xerr is not None:
-            style.append('error bars')
+            style.append("error bars")
 
         if self._yerr is not None:
-            style.append('y dir=both, y explicit')
+            style.append("y dir=both, y explicit")
         if self._xerr is not None:
-            style.append('x dir=both, x explicit')
+            style.append("x dir=both, x explicit")
 
-        return ', '.join(style)
+        return ", ".join(style)
 
     # we are forced to redefine the setter
     @style.setter
@@ -153,8 +149,8 @@ class Points(_PlotEntryContainer):
 
         addplot = r"""    \addplot%(options)s
 %(table)s""" % {
-            'options': options,
-            'table': table,
+            "options": options,
+            "table": table,
         }
         return addplot
 
@@ -162,43 +158,43 @@ class Points(_PlotEntryContainer):
     def table(self):
         data = []
 
-        table_declare = ['x=x', 'y=y']
+        table_declare = ["x=x", "y=y"]
 
-        hdr = ['x', 'y']
+        hdr = ["x", "y"]
 
         if self._xerr is not None:
-            table_declare.append('x error=xerr')
-            hdr.append('xerr')
+            table_declare.append("x error=xerr")
+            hdr.append("xerr")
         if self._yerr is not None:
-            table_declare.append('y error=yerr')
-            hdr.append('yerr')
+            table_declare.append("y error=yerr")
+            hdr.append("yerr")
 
-        table_declare = '    table[%s]' % ', '.join(table_declare)
+        table_declare = "    table[%s]" % ", ".join(table_declare)
         data.append(table_declare)
-        data.append('    {')
+        data.append("    {")
 
-        hdr = '      %s' % ' '.join(hdr)
+        hdr = "      %s" % " ".join(hdr)
         data.append(hdr)
 
         for i in range(self._x.size):
             v = []
 
-            v.append('%g' % self._x[i])
-            v.append('%g' % self._y[i])
+            v.append("%g" % self._x[i])
+            v.append("%g" % self._y[i])
 
             if self._xerr is not None:
-                v.append('%g' % self._xerr[i])
+                v.append("%g" % self._xerr[i])
 
             if self._yerr is not None:
-                v.append('%g' % self._yerr[i])
+                v.append("%g" % self._yerr[i])
 
-            v = '      %s' % ' '.join(v)
+            v = "      %s" % " ".join(v)
 
             data.append(v)
 
-        data.append('    };')
+        data.append("    };")
 
-        return '\n'.join(data)
+        return "\n".join(data)
 
 
 class Function(_PlotEntryContainer):
@@ -226,11 +222,8 @@ class Function(_PlotEntryContainer):
     label: string
         A label for the legend
     """
-    def __init__(self,
-                 function,
-                 domain=None,
-                 style=None,
-                 label=None):
+
+    def __init__(self, function, domain=None, style=None, label=None):
 
         self.function = function
         self.domain = domain
@@ -247,10 +240,10 @@ class Function(_PlotEntryContainer):
         self._domain = domain
 
         if domain is not None:
-            assert isinstance(domain, (tuple, list)), \
-                'domain must be a tuple or list of length 2'
-            assert len(domain) == 2, \
-                'domain must be a tuple or list of length 2'
+            assert isinstance(
+                domain, (tuple, list)
+            ), "domain must be a tuple or list of length 2"
+            assert len(domain) == 2, "domain must be a tuple or list of length 2"
 
     @property
     def style(self):
@@ -261,12 +254,12 @@ class Function(_PlotEntryContainer):
         else:
             style = [style]
 
-        style = ['mark=none'] + style
+        style = ["mark=none"] + style
         domain = self.domain
-        if domain is not None and 'domain' not in style:
-            style.append('domain=%g:%g' % tuple(domain))
+        if domain is not None and "domain" not in style:
+            style.append("domain=%g:%g" % tuple(domain))
 
-        return ', '.join(style)
+        return ", ".join(style)
 
     # we are forced to redefine the setter
     @style.setter
@@ -279,8 +272,8 @@ class Function(_PlotEntryContainer):
         options = self.addplot_options
 
         addplot = r"""    \addplot%(options)s {%(function)s};""" % {
-            'options': options,
-            'function': self.function,
+            "options": options,
+            "function": self.function,
         }
         return addplot
 

@@ -6,11 +6,8 @@ from .data_containers import (
     Function,
 )
 
-# we need a place to keep temporary image files for the show command, that will
-# last the lifetime of the session but be cleaned up after session end.  This
-# avoids race conditions using context managers
-
-TMPDIR = tempfile.TemporaryDirectory()
+# force /tmp, since it gets cleaned up periodically
+TMPDIR = '/tmp'
 
 GOLDEN_RATIO = 1.618
 
@@ -30,7 +27,7 @@ TAIL = r"""
 \end{document}
 """
 
-# forf filling
+# for filling
 # \usepgfplotslibrary{fillbetween}
 
 
@@ -82,21 +79,24 @@ class Plot(object):
 
         This is an alternative to puting objects in in plot using plt.add()
     """
-    def __init__(self,
-                 xmin=None,
-                 xmax=None,
-                 ymin=None,
-                 ymax=None,
-                 ratio=GOLDEN_RATIO,
-                 width=8,
-                 height=None,
-                 nminor_ticks=3,
-                 xlabel=None,
-                 ylabel=None,
-                 units='cm',
-                 legend_pos=None,
-                 legend_style=None,
-                 contents=None):
+
+    def __init__(
+        self,
+        xmin=None,
+        xmax=None,
+        ymin=None,
+        ymax=None,
+        ratio=GOLDEN_RATIO,
+        width=8,
+        height=None,
+        nminor_ticks=3,
+        xlabel=None,
+        ylabel=None,
+        units="cm",
+        legend_pos=None,
+        legend_style=None,
+        contents=None,
+    ):
 
         self.xmin = xmin
         self.xmax = xmax
@@ -154,11 +154,11 @@ class Plot(object):
         """
 
         ext = fname[-4:]
-        if ext == '.tex':
+        if ext == ".tex":
             self.write_tex(fname)
-        elif ext == '.pdf':
+        elif ext == ".pdf":
             self.write_pdf(fname)
-        elif ext == '.png':
+        elif ext == ".png":
             self.write_png(fname, dpi=dpi)
 
     def write_tex(self, tex_file):
@@ -171,7 +171,7 @@ class Plot(object):
         tex_file: str
             The file name to write.
         """
-        with open(tex_file, 'w') as fobj:
+        with open(tex_file, "w") as fobj:
             self._write_tex(fobj)
 
     def write_pdf(self, pdf_file):
@@ -210,11 +210,11 @@ class Plot(object):
         if os.path.exists(png_file):
             os.remove(png_file)
 
-        assert png_file[-4:] == '.png'
+        assert png_file[-4:] == ".png"
 
         png_base = os.path.basename(png_file)
 
-        pdf_base = png_base[:-4] + '.pdf'
+        pdf_base = png_base[:-4] + ".pdf"
 
         with tempfile.TemporaryDirectory() as tdir:
 
@@ -222,33 +222,10 @@ class Plot(object):
             self._write_pdf(pdf_file)
 
             _pdf_to_png(
-                pdf_file=pdf_file,
-                png_file=png_file,
-                dpi=dpi,
+                pdf_file=pdf_file, png_file=png_file, dpi=dpi,
             )
 
-    def show(self, dpi=150):
-        """
-        show the plot on the screen.
-
-        The plot is written to a png file and shown using the
-        configured image viewer (currently hardcoded as feh)
-        """
-
-        with tempfile.TemporaryDirectory() as tdir:
-            pdf_file = tempfile.mktemp(
-                dir=tdir,
-                prefix='hickory-plot-',
-                suffix='.pdf',
-            )
-            self._write_pdf(pdf_file)
-
-            _show_pdf(
-                pdf_file=pdf_file,
-                dpi=dpi,
-            )
-
-    def show_old(self, dpi=150):
+    def show(self, dpi=150, viewer='feh'):
         """
         show the plot on the screen.
 
@@ -257,22 +234,23 @@ class Plot(object):
         """
 
         pdf_file = tempfile.mktemp(
-            dir=TMPDIR.name,
-            prefix='hickory-plot-',
-            suffix='.pdf',
+            dir=TMPDIR, prefix="hickory-plot-", suffix=".pdf",
         )
-        png_file = pdf_file.replace('.pdf', '.png')
+        png_file = pdf_file.replace(".pdf", ".png")
         self._write_pdf(pdf_file)
 
-        _pdf_to_png(
-            png_file=png_file,
-            pdf_file=pdf_file,
-            dpi=dpi,
-        )
+        if viewer == 'evince':
+            _show_pdf_evince(pdf_file)
+        elif viewer == 'feh':
 
-        command = 'feh %s &' % png_file
-        os.system(command)
+            _pdf_to_png(
+                png_file=png_file, pdf_file=pdf_file, dpi=dpi,
+            )
 
+            command = "feh %s &" % png_file
+            os.system(command)
+
+            os.remove(pdf_file)
 
     @property
     def units(self):
@@ -281,7 +259,9 @@ class Plot(object):
     @units.setter
     def units(self, units):
         assert units in [
-            'cm', 'mm', 'in',
+            "cm",
+            "mm",
+            "in",
         ]
         self._units = units
 
@@ -290,7 +270,7 @@ class Plot(object):
         height = self._height
         if height is None:
             if self.width is not None and self.ratio is not None:
-                height = self.width/self.ratio
+                height = self.width / self.ratio
 
         return height
 
@@ -305,49 +285,49 @@ class Plot(object):
     @legend_style.setter
     def legend_style(self, legend_style):
         if isinstance(legend_style, (tuple, list)):
-            legend_style = ', '.join(legend_style)
+            legend_style = ", ".join(legend_style)
         self._legend_style = legend_style
 
     @property
     def axis_options(self):
 
         options = []
-        options.append('axis on top')
+        options.append("axis on top")
 
         if self.nminor_ticks is not None:
-            options.append('minor tick num=%d' % self.nminor_ticks)
+            options.append("minor tick num=%d" % self.nminor_ticks)
 
         width = self.width
         if width is not None:
-            widthstr = '%g%s' % (width, self.units)
-            options.append('width=%s' % widthstr)
+            widthstr = "%g%s" % (width, self.units)
+            options.append("width=%s" % widthstr)
 
         height = self.height
         if height is not None:
-            heightstr = '%g%s' % (height, self.units)
-            options.append('height=%s' % heightstr)
+            heightstr = "%g%s" % (height, self.units)
+            options.append("height=%s" % heightstr)
 
-        options.append('scale only axis')
+        options.append("scale only axis")
 
         if self.xmin is not None:
-            options.append('xmin=%g' % self.xmin)
+            options.append("xmin=%g" % self.xmin)
         if self.xmax is not None:
-            options.append('xmax=%g' % self.xmax)
+            options.append("xmax=%g" % self.xmax)
         if self.ymin is not None:
-            options.append('ymin=%g' % self.ymin)
+            options.append("ymin=%g" % self.ymin)
         if self.ymax is not None:
-            options.append('ymax=%g' % self.ymax)
+            options.append("ymax=%g" % self.ymax)
         if self.xlabel is not None:
-            options.append('xlabel={%s}' % self.xlabel)
+            options.append("xlabel={%s}" % self.xlabel)
         if self.ylabel is not None:
-            options.append('ylabel={%s}' % self.ylabel)
+            options.append("ylabel={%s}" % self.ylabel)
 
         if self.legend_pos is not None:
-            options.append('legend pos=%s' % self.legend_pos)
+            options.append("legend pos=%s" % self.legend_pos)
         if self.legend_style is not None:
-            options.append('legend style={%s}' % self.legend_style)
+            options.append("legend style={%s}" % self.legend_style)
 
-        return ',\n      '.join(options)
+        return ",\n      ".join(options)
 
     def _write_pdf(self, fname):
         """
@@ -362,29 +342,29 @@ class Plot(object):
         if os.path.exists(fname):
             os.remove(fname)
 
-        assert fname[-4:] == '.pdf'
-        texfile = fname[:-4] + '.tex'
+        assert fname[-4:] == ".pdf"
+        texfile = fname[:-4] + ".tex"
 
         if os.path.exists(texfile):
-            raise RuntimeError('texfile already exists %s' % texfile)
+            raise RuntimeError("texfile already exists %s" % texfile)
 
-        with open(texfile, 'w') as fobj:
+        with open(texfile, "w") as fobj:
             self._write_tex(fobj)
 
-        command = ['pdflatex']
+        command = ["pdflatex"]
         fdir = os.path.dirname(fname)
         if fdir is not None:
-            command.append('-output-directory %s' % fdir)
+            command.append("-output-directory %s" % fdir)
 
         command.append(texfile)
-        command = ' '.join(command) + ' > /dev/null'
+        command = " ".join(command) + " > /dev/null"
 
         ret_code = os.system(command)
 
         os.remove(texfile)
 
         if ret_code != 0:
-            raise RuntimeError('pdflatex failed')
+            raise RuntimeError("pdflatex failed")
 
     def _write_tex(self, fobj):
         """
@@ -404,142 +384,71 @@ class Plot(object):
             if obj.label is not None:
                 fobj.write(obj.legend_entry)
 
-            fobj.write('\n\n')
+            fobj.write("\n\n")
 
         end_axis(fobj=fobj)
         fobj.write(TAIL)
 
 
 def _write_axis(*, fobj, options):
-    text = r"""\begin{axis}[
+    text = (
+        r"""\begin{axis}[
     %s
-    ]""" % options
+    ]"""
+        % options
+    )
     fobj.write(text)
-    fobj.write('\n')
+    fobj.write("\n")
 
 
 def end_axis(*, fobj):
-    fobj.write('\n\\end{axis}\n')
+    fobj.write("\n\\end{axis}\n")
 
 
 def _pdf_to_png(*, png_file, pdf_file, dpi):
     # for jpg, use device jpg
     command = [
-        'gs',
-        '-dTextAlphaBits=4',
-        '-dGraphicsAlphaBits=4',
-        '-dSAFER',
-        '-dBATCH',
-        '-dNOPAUSE',
-        '-r%d' % dpi,
-        '-sDEVICE=png16m',
-        '-sOutputFile=%s' % png_file,
-        '%s' % pdf_file,
+        "gs",
+        "-dTextAlphaBits=4",
+        "-dGraphicsAlphaBits=4",
+        "-dSAFER",
+        "-dBATCH",
+        "-dNOPAUSE",
+        "-r%d" % dpi,
+        "-sDEVICE=png16m",
+        "-sOutputFile=%s" % png_file,
+        "%s" % pdf_file,
     ]
-    command = ' '.join(command) + ' > /dev/null'
+    command = " ".join(command) + " > /dev/null"
     os.system(command)
 
 
-def _show_pdf(*, pdf_file, dpi):
-    # for jpg, use device jpg
-    import subprocess
-    command = [
-        'gs',
-        '-q',
-        '-dTextAlphaBits=4',
-        '-dGraphicsAlphaBits=4',
-        '-dSAFER',
-        '-dBATCH',
-        '-dNOPAUSE',
-        # '-dNOPROMPT',
-        '-r%d' % dpi,
-        '-sDEVICE=png16m',
-        '-sOutputFile=-',
-        pdf_file,
-    ]
-    cmd = 'gs -q -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dSAFER -dBATCH -dNOPAUSE -r200 -sDEVICE=png16m -sOutputFile=- %s | feh - &' % pdf_file
-    os.system(cmd)
-
-    '''
-    # print(pdf_file)
-    # subprocess.Popen(command)
-    # stop
-    pipe = subprocess.Popen(command, stdout=subprocess.PIPE)
-    pipe2 = subprocess.Popen(
-        ('feh','-'),
-        stdin=pipe.stdout,
-    )
-    import time
-    time.sleep(1)
-    # command = ' '.join(command) + ' 2> /dev/null | feh &'
-    # command = ' '.join(command) + ' 2> /dev/null | feh - &'
-    # print(command)
-    # command = ' '.join(command) + ' | feh &'
-    # os.system(command)
-    '''
-
-
-def _show_pdf_gs(*, pdf_file, dpi):
-    # for jpg, use device jpg
-    import subprocess
-    command = [
-        'gs',
-        '-q',
-        # '-dTextAlphaBits=4',
-        # '-dGraphicsAlphaBits=4',
-        '-dSAFER',
-        '-dBATCH',
-        '-dNOPAUSE',
-        # '-r%d' % dpi,
-        #'-sDEVICE=png16m',
-        #'-sOutputFile=-',
-        '%s' % pdf_file,
-    ]
-
-    # pipe = subprocess.Popen(command, stdout=subprocess.PIPE)
-    pipe = subprocess.Popen(command)
-
-    #pipe2 = subprocess.Popen(
-    #    ('feh', ),
-    #    stdin=pipe.stdout,
-    #)
-    # command = ' '.join(command) + ' 2> /dev/null | feh &'
-    # print(command)
-    # command = ' '.join(command) + ' | feh &'
-    # os.system(command)
+def _show_pdf_evince(pdf_file):
+    command = 'evince %s &' % pdf_file
+    os.system(command)
 
 
 def test():
     import numpy as np
+
     rng = np.random.RandomState(5)
 
-    plt = Plot(
-        legend_pos='north west',
-        legend_style='draw=none',
-    )
+    plt = Plot(legend_pos="north west", legend_style="draw=none",)
     num = 10
 
     x = np.arange(num)
 
     err = 5
-    y = x**2 + rng.normal(size=num, scale=err)
-    yerr = y*0 + err
-    pts1 = Points(
-        x, y, yerr=yerr, style='only marks',
-        label='data',
-    )
-    fun = Function('x^2', domain=[x.min(), x.max()],
-                   label=r'$x^2$')
-    pts2 = Points(
-        x,
-        x**2 + 30,
-        label=r'$x^2 + 30$',
-    )
+    y = x ** 2 + rng.normal(size=num, scale=err)
+    yerr = y * 0 + err
+    pts1 = Points(x, y, yerr=yerr, style="only marks", label="data",)
+    fun = Function("x^2", domain=[x.min(), x.max()], label=r"$x^2$")
+    pts2 = Points(x, x ** 2 + 30, label=r"$x^2 + 30$",)
 
     plt.add(pts1, fun, pts2)
 
-    plt.write('test-gen.png')
+    plt.write("test-gen.png")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test()

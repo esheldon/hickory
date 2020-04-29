@@ -5,7 +5,17 @@ from .data_containers import (
 )
 
 
-def plot(x, y=None, xerr=None, yerr=None, plt=None, show=True, file=None, dpi=150):
+def plot(
+    x,
+    y=None,
+    xerr=None,
+    yerr=None,
+    plt=None,
+    show=True,
+    viewer='feh',
+    file=None,
+    dpi=150,
+):
     """
     plot data or a function
 
@@ -26,6 +36,6 @@ def plot(x, y=None, xerr=None, yerr=None, plt=None, show=True, file=None, dpi=15
         plt.write(file, dpi=dpi)
 
     if show:
-        plt.show(dpi=dpi)
+        plt.show(dpi=dpi, viewer=viewer)
 
     return plt
