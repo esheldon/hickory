@@ -1,3 +1,11 @@
+"""
+TODO:
+    - plotting 2d arrays as images
+    - 2d histograms, e.g. using hexbin under the hood
+    - non-symmetric error bars
+    - fill between curves etc.
+    - plotting functions
+"""
 import numpy as np
 from .colors import get_color
 
