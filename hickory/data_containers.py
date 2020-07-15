@@ -16,6 +16,7 @@ class Points(object):
         x, y, xerr=None, yerr=None,
         label=None,
         marker='o',
+        fillstyle='full',
         size=None,
         linestyle=None,
         linewidth=None,
@@ -23,12 +24,14 @@ class Points(object):
         edgecolor=None,
         edgewidth=None,
         alpha=None,
+        ecolor=None,
         capsize=2,
     ):
 
         self._set_points(x, y, xerr, yerr)
         self.label = label
         self.marker = marker
+        self.fillstyle = fillstyle
         self.linestyle = linestyle
         self.linewidth = linewidth
         self.color = color
@@ -37,6 +40,7 @@ class Points(object):
         self.size = size
         self.alpha = alpha
 
+        self.ecolor = ecolor
         self.capsize = capsize
 
     def _set_points(self, x, y, xerr, yerr):
@@ -65,6 +69,8 @@ class Points(object):
     def _add_to_axes(self, ax):
 
         color = None if self.color is None else get_color(self.color)
+        fillstyle = 'none' if self.fillstyle is None else self.fillstyle
+        ecolor = self.ecolor if self.ecolor is not None else self.color
 
         linestyle = 'none' if self.linestyle is None else self.linestyle
         ax.errorbar(
@@ -72,12 +78,14 @@ class Points(object):
             xerr=self.xerr,
             yerr=self.yerr,
             marker=self.marker,
+            fillstyle=fillstyle,
+            markeredgecolor=self.edgecolor,
             markersize=self.size,
             linestyle=linestyle,
             linewidth=self.linewidth,
             color=color,
             capsize=self.capsize,
-            ecolor=color,
+            ecolor=ecolor,
             elinewidth=self.linewidth,
             alpha=self.alpha,
             label=self.label,

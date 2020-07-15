@@ -64,6 +64,7 @@ class Plot(object):
                 loc=legend.loc,
                 frameon=legend.frame,
                 borderaxespad=legend.borderaxespad,
+                framealpha=legend.framealpha,
             )
 
     def _set_legend(self, legend):
