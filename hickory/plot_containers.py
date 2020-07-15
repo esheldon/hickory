@@ -1,12 +1,28 @@
 import tempfile
 import matplotlib.pyplot as plt
 
+from .legend import Legend
+
 
 class Plot(object):
-    def __init__(self, xlabel=None, ylabel=None):
+    """
+    A plot container
+
+    Parameters
+    ----------
+    xlabel: str
+        Label for the x axis
+    ylabel: str
+        Label for the y axis
+    legend: Legend or bool
+        If a boolean True, the legend is auto-generated.  For more control send
+        a Legend instance.
+    """
+    def __init__(self, xlabel=None, ylabel=None, legend=None):
 
         self._xlabel = xlabel
         self._ylabel = ylabel
+        self._set_legend(legend)
         self.objlist = []
         self._reset_fig()
 
@@ -35,11 +51,30 @@ class Plot(object):
 
         if self._xlabel is not None:
             self.ax.set_xlabel(self._xlabel)
+
         if self._ylabel is not None:
             self.ax.set_ylabel(self._ylabel)
 
         for obj in self.objlist:
             obj._add_to_axes(self.ax)
+
+        legend = self.legend
+        if legend is not None:
+            self.ax.legend(
+                loc=legend.loc,
+                frameon=legend.frame,
+                borderaxespad=legend.borderaxespad,
+            )
+
+    def _set_legend(self, legend):
+        if legend is True:
+            self.legend = Legend()
+        elif legend:
+            # we got something that wasn't False, we'll let
+            # duck typing do its thing
+            self.legend = legend
+        else:
+            self.legend = None
 
     def _reset_fig(self):
         self.fig = None

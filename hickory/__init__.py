@@ -6,3 +6,5 @@ from . import plot_containers
 
 from .data_containers import Points, Curve, HLine, VLine
 from . import data_containers
+
+from .legend import Legend

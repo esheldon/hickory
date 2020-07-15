@@ -14,6 +14,7 @@ class Points(object):
     def __init__(
         self,
         x, y, xerr=None, yerr=None,
+        label=None,
         marker='o',
         size=None,
         linestyle=None,
@@ -26,6 +27,7 @@ class Points(object):
     ):
 
         self._set_points(x, y, xerr, yerr)
+        self.label = label
         self.marker = marker
         self.linestyle = linestyle
         self.linewidth = linewidth
@@ -78,8 +80,7 @@ class Points(object):
             ecolor=color,
             elinewidth=self.linewidth,
             alpha=self.alpha,
-            # zorder=3,
-            # barsabove=True,
+            label=self.label,
         )
 
 
@@ -90,6 +91,7 @@ class Curve(Points):
     """
     def __init__(
         self, x, y,
+        label=None,
         linestyle='-',
         linewidth=None,
         color=None,
@@ -102,6 +104,7 @@ class Curve(Points):
 
         super().__init__(
             x, y,
+            label=label,
             linestyle=linestyle,
             linewidth=linewidth,
             color=color,
@@ -118,12 +121,14 @@ class HLine(object):
     def __init__(self,
                  y=0,
                  xmin=0, xmax=1,
+                 label=None,
                  linestyle='-', linewidth=None,
                  color=None,
                  alpha=None):
         self.y = y
         self.xmin = xmin
         self.xmax = xmax
+        self.label = label
         self.linestyle = linestyle
         self.linewidth = linewidth
         self.color = color
@@ -140,6 +145,7 @@ class HLine(object):
             linewidth=self.linewidth,
             color=color,
             alpha=self.alpha,
+            label=self.label,
         )
 
 
@@ -147,12 +153,14 @@ class VLine(object):
     def __init__(self,
                  x=0,
                  ymin=0, ymax=1,
+                 label=None,
                  linestyle='-', linewidth=None,
                  color=None,
                  alpha=None):
         self.x = x
         self.ymin = ymin
         self.ymax = ymax
+        self.label = label
         self.linestyle = linestyle
         self.linewidth = linewidth
         self.color = color
@@ -169,6 +177,7 @@ class VLine(object):
             linewidth=self.linewidth,
             color=color,
             alpha=self.alpha,
+            label=self.label,
         )
 
 

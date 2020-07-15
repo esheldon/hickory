@@ -2,6 +2,8 @@
 color name to hex translation based on the rgb.txt -> hex conversion here
 https://github.com/timoxley/colornames
 """
+
+
 def get_color(color_name):
     if color_name[0] == '#':
         return color_name
