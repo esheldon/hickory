@@ -1,41 +1,41 @@
 from .plot_containers import Plot
-from .data_containers import (
-    Points,
-    Function,
-)
+from .data_containers import Points
 
 
-def plot(
-    x,
-    y=None,
-    xerr=None,
-    yerr=None,
-    plt=None,
-    show=True,
-    viewer='feh',
-    file=None,
-    dpi=150,
-):
-    """
-    plot data or a function
+def plot(x, y, xerr=None, yerr=None,
+         marker='o',
+         linestyle=None,
+         linewidth=None,
+         color=None,
+         edgecolor=None,
+         edgewidth=None,
+         size=None,
+         alpha=None,
+         capsize=2,
+         xlabel=None, ylabel=None,
+         plt=None, show=False, dpi=None):
 
-    TODO docs
-    """
     if plt is None:
-        plt = Plot()
+        plt = Plot(
+            xlabel=xlabel,
+            ylabel=ylabel,
+        )
+    assert isinstance(plt, Plot)
 
-    if isinstance(x, str):
-        obj = Function(x)
-    else:
-        assert y is not None
-        obj = Points(x, y, xerr=xerr, yerr=yerr)
+    pts = Points(
+        x, y, xerr=xerr, yerr=yerr,
+        marker=marker,
+        size=size,
+        linestyle=linestyle,
+        linewidth=linewidth,
+        color=color,
+        edgecolor=edgecolor,
+        alpha=alpha,
+        capsize=capsize,
+    )
+    plt.add(pts)
 
-    plt.add(obj)
-
-    if file is not None:
-        plt.write(file, dpi=dpi)
-
-    elif show:
-        plt.show(dpi=dpi, viewer=viewer)
+    if show:
+        plt.show(dpi=dpi)
 
     return plt

@@ -1,2 +1,2 @@
 # hickory
-Python plotting library using latex pgfplots as the backend
+Python plotting library, wrapping matplotlib in an object oriented interface
