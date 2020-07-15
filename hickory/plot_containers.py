@@ -1,3 +1,7 @@
+"""
+todo: seems aspect ratio is controlling the plot but not also
+tightening up the box in the figure, need to adjust figure as well
+"""
 import numpy as np
 import tempfile
 import matplotlib.pyplot as plt
@@ -15,14 +19,17 @@ class Plot(object):
         Label for the x axis
     ylabel: str
         Label for the y axis
+    aratio: float
+        Axis ratio of output plot, ysize/xsize
     legend: Legend or bool
         If a boolean True, the legend is auto-generated.  For more control send
         a Legend instance.
     """
-    def __init__(self, xlabel=None, ylabel=None, legend=None):
+    def __init__(self, xlabel=None, ylabel=None, aratio=None, legend=None):
 
         self._xlabel = xlabel
         self._ylabel = ylabel
+        self._aratio = aratio
         self._set_legend(legend)
         self.objlist = []
         self._reset_fig()
@@ -95,6 +102,13 @@ class Plot(object):
                 borderaxespad=legend.borderaxespad,
                 framealpha=legend.framealpha,
             )
+
+        # needs to come after plotting
+        if self._aratio is not None:
+            self.ax.set_aspect(
+                1.0/self.ax.get_data_ratio()*self._aratio
+            )
+
 
     def _set_legend(self, legend):
         if legend is True:
