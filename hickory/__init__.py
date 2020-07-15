@@ -1,8 +1,8 @@
+# flake8: noqa
 from .convenience import plot
 
-from .plot_containers import Plot  # noqa
-from . import plot_containers  # noqa
+from .plot_containers import Plot
+from . import plot_containers
 
-from .data_containers import Points  # noqa
-from .data_containers import Function # noqa
-from . import data_containers  # noqa
+from .data_containers import Points, Curve, HLine, VLine
+from . import data_containers
