@@ -43,22 +43,40 @@ class Plot(object):
         if dpi is not None:
             fig.set_dpi(dpi)
 
-        self.fig.savefig(fname)
+        self.fig.savefig(fname, bbox_inches='tight')
 
     def show(self, dpi=None):
         import io
 
         fig, ax = self.get_fig()
-        # fig.canvas.draw()
 
         if dpi is not None:
+            # need to do it here or else bbox is wrong after
+            # savefig (does not store it permanently)
             fig.set_dpi(dpi)
 
+        # fig.canvas.draw()
+        # renderer = fig.canvas.get_renderer()
+        # # bbox = ax.get_tightbbox(renderer)
+        # bbox = ax.figure.get_tightbbox(renderer)
+        # bbox = bbox.padded(None)
+
+        # fig.set_tight_layout(True)
+        # print(fig.bbox.bounds)
+
         io_buf = io.BytesIO()
+
+        # hmm... the bounds end up wrong if I do bbox_inches here,
+        # because in fig.canvas.print_figure it does not
+        # store the bbox permanently it resets it to what it was
+        # before the call
+        # fig.savefig(io_buf, format='raw',  bbox_inches='tight')
+        # fig.savefig(io_buf, format='raw', bbox_inches=bbox)
         fig.savefig(io_buf, format='raw')
         io_buf.seek(0)
 
         shape = (int(fig.bbox.bounds[3]), int(fig.bbox.bounds[2]), -1)
+        # shape = (int(bbox.bounds[3]), int(bbox.bounds[2]), -1)
 
         data = np.frombuffer(io_buf.getvalue(), dtype=np.uint8)
         img_array = np.reshape(
