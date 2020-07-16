@@ -1,6 +1,12 @@
 """
-todo: seems aspect ratio is controlling the plot but not also
-tightening up the box in the figure, need to adjust figure as well
+TODO:
+    - plotting 2d arrays as images
+    - 2d histograms, e.g. using hexbin under the hood
+    - non-symmetric error bars
+    - fill between curves etc.
+    - plotting functions
+    - figure size: maybe have it in write/show and force a rerender
+      when that is sent?
 """
 import numpy as np
 import tempfile
@@ -86,6 +92,10 @@ class Plot(object):
 
         io_buf.close()
 
+        # from multiprocessing import Process
+        # p = Process(target=_show_array_tkinter, args=(img_array, ))
+        # p.start()
+
         _show_array_tkinter(img_array)
 
     def _show_from_file(self, dpi=None):
@@ -102,6 +112,8 @@ class Plot(object):
 
     def _render_fig(self):
         self.fig, self.ax = plt.subplots()
+        # self.fig, self.ax = plt.subplots(tight_layout=True)
+        # self.fig, self.ax = plt.subplots(constrained_layout=True)
 
         if self._xlabel is not None:
             self.ax.set_xlabel(self._xlabel)
