@@ -1,7 +1,7 @@
 # flake8: noqa
 from .convenience import plot
 
-from .plot_containers import Plot
+from .plot_containers import Plot, Table
 from . import plot_containers
 
 from .data_containers import Points, Curve, HLine, VLine
