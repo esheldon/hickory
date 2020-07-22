@@ -2,15 +2,9 @@
 
 from .convenience import plot, plot_hist
 
-from . import plot_containers
 from .plot_containers import Plot, Table
-
-# from .data_containers import Points, Curve, HLine, VLine
-# from . import data_containers
-
 from .legend import Legend
 
-from . import colors
 from .colors import (
     get_color,
     get_random_colors,
@@ -18,7 +12,6 @@ from .colors import (
     COLOR_VALS,
 )
 
-from . import cyclers
 from .cyclers import (
     get_marker_cycler,
     get_line_cycler,
@@ -29,3 +22,6 @@ from .cyclers import (
 )
 
 from .constants import GOLDEN_ARATIO
+
+from . import axes
+from . import formatters

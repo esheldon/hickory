@@ -57,9 +57,8 @@ def plot(
     aratio: float, optional
         Axis ratio of plot, ysize/xsize
     legend: bool or Legend instance
-        If True, create a legend, or you can send
-        a Legend() instance.  If None or False, no legend
-        is created
+        If True, a legend is created. You can also send a Legend() instance.
+        If None or False, no legend is created
     plt: Plot instance, optional
         If sent, a new Plot is not created, the input one
         is reused

@@ -1,204 +1,30 @@
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as mplt
 from matplotlib.axes import (
-    Axes,
     SubplotBase,
     subplot_class_factory,
 )
 from numbers import Integral
 
-from .colors import COLORS
 from .legend import Legend
 from .constants import GOLDEN_ARATIO
-
-DEFAULT_MARKER = 'o'
-
-
-class _ScalarFormatter(matplotlib.ticker.ScalarFormatter):
-    """
-    tick formatter for linear axes
-
-    Removes mathdefault from format strings
-    """
-    def _set_format(self):
-        super()._set_format()
-
-        if 'mathdefault' in self.format:
-            self.format = _remove_mathdefault(self.format)
-
-
-class _LogFormatter(matplotlib.ticker.LogFormatterSciNotation):
-    """
-    tick formatter for log axes
-
-    Removes mathdefault from format strings
-    """
-
-    def __call__(self, x, pos=None):
-        s = super().__call__(x, pos=pos)
-
-        if 'mathdefault' in s:
-            s = self.format = _remove_mathdefault(s)
-
-        return s
-
-
-def _remove_mathdefault(s):
-    s = s.replace(r'\mathdefault{', '')
-    s = s[0:-2] + '$'
-    return s
-
-
-class _Axes(Axes):
-    """
-    This is the only way to override some of default for the plotting methods.
-    For example, that points are drawn with a line between.  No way to do it in
-    the config file, because it will affect all lines not just the plotting
-    routines.
-    """
-    def plot(
-        self,
-        *args,
-        marker=None,
-        linestyle=None,
-        **kw
-    ):
-
-        marker, linestyle = self._get_marker_and_linestyle(
-            marker=marker,
-            linestyle=linestyle,
-        )
-
-        if 'color' in kw:
-            if kw['color'] in COLORS:
-                kw['color'] = COLORS[kw['color']]
-
-        return super().plot(
-            *args,
-            marker=marker,
-            linestyle=linestyle,
-            **kw
-        )
-
-    def set_aratio(self, aratio):
-        self.set_aspect(1.0/self.get_data_ratio()*aratio)
-
-    def errorbar(self, *args, marker=None, linestyle=None, **kw):
-
-        marker, linestyle = self._get_marker_and_linestyle(
-            marker=marker,
-            linestyle=linestyle,
-        )
-
-        if 'color' in kw:
-            if kw['color'] in COLORS:
-                kw['color'] = COLORS[kw['color']]
-
-        return super().errorbar(
-            *args,
-            marker=marker,
-            linestyle=linestyle,
-            **kw
-        )
-
-    def _get_marker_and_linestyle(self, *, marker, linestyle):
-
-        if marker is None and linestyle is None:
-            marker = DEFAULT_MARKER
-
-        if linestyle is None:
-            linestyle = 'none'
-
-        return marker, linestyle
-
-    def hist(
-        self,
-        *args,
-        binsize=None,
-        bins=None,
-        range=None,
-        min=None,
-        max=None,
-        **kw
-    ):
-        """
-        make a histogram plot
-
-        Parameters
-        ----------
-        x: array or sequences
-            Array of x values
-        binsize: float, optional
-            Optional binsize, overrides bins= keyword
-        bins: int or sequence
-            Optional bins keywords.  Can be an integer number of bins or the
-            bin edges.  See matplotlib ax.hist documentation
-        range: 2-element sequence, optional
-            The min/max range for binning the data.  Defaults to
-            min and max of the input data.  Takes precedence over
-            min= and max= keywords
-        min: float
-            Minimum value to use in data set. If range is not set, then
-            the range will be [min, ?]
-        max: float
-            Maxiimum value to use in data set. If range is not set, then
-            the range have this as max value
-
-        Additional keywords for ax.hist command. See docs for matplotlib
-        axes.hist command for details
-
-        Returns
-        -------
-        Plot instance
-        """
-
-        # binsize takes precedence over bins
-        if binsize is not None:
-            if range is None:
-
-                if len(args) == 0:
-                    raise ValueError("send data in position 1")
-
-                x = args[0]
-
-                if min is None:
-                    min = x.min()
-                if max is None:
-                    max = x.max()
-
-                range = [min, max]
-
-            bins = np.int64((range[1] - range[0]) / np.float64(binsize))
-            if bins < 1:
-                bins = 1
-
-        return super().hist(
-            *args,
-            bins=bins,
-            range=range,
-            **kw
-        )
-
-    def set_yscale(self, value, **kwargs):
-        ret = super().set_yscale(value, **kwargs)
-        if value == 'log':
-            self.yaxis.set_major_formatter(_LogFormatter())
-
-        return ret
-
-    def set(self, margin=None, **kw):
-        if margin is not None:
-            kw['xmargin'] = margin
-            kw['ymargin'] = margin
-        super().set(**kw)
+from .formatters import HickoryScalarFormatter
+from .axes import HickoryAxes
 
 
 class _PlotContainer(object):
+    """
+    over-ride the show and savefig methods.
+
+    Showing does does not use one of the toolkit backends from matplotlib, but
+    rather Tkinter, and thus hickory can be imported with and without a
+    display, yet can still provide a plot display, unlike matplotlib which will
+    crash if you have set a toolkit backend but no display is present.
+    """
     def show(self, dpi=None):
         """
-        show the plot on the display.  Requires tkinter
-        to be installed and able to connect to a display
+        Show the plot on the display.  Requires tkinter and pillow/PIL to be
+        installed and able to connect to a display
 
         Parameters
         ----------
@@ -232,7 +58,7 @@ class _PlotContainer(object):
         ----------
         file: str
             Filename to write
-        **kw see savefig docs
+        **kw see savefig docs for additional keywords
         """
 
         if self._legend:
@@ -298,7 +124,7 @@ class _PlotContainer(object):
             #     self, *args, **kwargs,
             # )
             # ESS override class to use ours
-            a = subplot_class_factory(_Axes)(
+            a = subplot_class_factory(HickoryAxes)(
                 self,
                 *args,
                 **kwargs
@@ -320,8 +146,26 @@ class _PlotContainer(object):
 
 class Plot(_PlotContainer, mplt.Figure):
     """
-    This object combines the figure and single axis so
-    we don't need to carry around both
+    A plot container.  This class provides an interface to both
+    the Figure and axis functionality in one.
+
+    Parameters
+    ----------
+    aratio: float, optional
+        Axis ratio of plot, ysize/xsize. Default is the
+        1/(golden ratio) ~ 0.618
+    legend: bool or Legend instance
+        If True, a legend is created. You can also send a Legend() instance.
+        If None or False, no legend is created
+
+    Additional Keywords for the Plot/matplotlib Figure.  See docs for
+        the matplotlib Figure class
+
+        figsize dpi facecolor edgecolor linewidth
+        frameon subplotpars tight_layout constrained_layout
+
+    Additional Keywords for setting axis parameters such as
+        xlabel, xlim, margin (or xmargin/ymargin), etc.
     """
     def __init__(
         self,
@@ -360,8 +204,8 @@ class Plot(_PlotContainer, mplt.Figure):
         ax = self.axes[0]
 
         # default formatters
-        ax.xaxis.set_major_formatter(_ScalarFormatter())
-        ax.yaxis.set_major_formatter(_ScalarFormatter())
+        ax.xaxis.set_major_formatter(HickoryScalarFormatter())
+        ax.yaxis.set_major_formatter(HickoryScalarFormatter())
 
         self.set(**axis_kw)
 
@@ -398,6 +242,22 @@ class Plot(_PlotContainer, mplt.Figure):
 
 
 class Table(_PlotContainer, mplt.Figure):
+    """
+    A plot container for a table of subplots.  Provides
+    access to the Figure and subplot grid in one interface.
+
+    e.g.
+
+    tab = Table(nrows=2, ncols=3, ...)
+    tab[1, 0].plot(x, y)
+    tab[0, 1].set(xlabel='x', ylabel='y')
+    etc.
+
+    Parameters
+    ----------
+    **figure_kw: keywords for the Figure class
+    **subplots_kw: keywords for the subplots command
+    """
     def __init__(
         self,
         nrows=1,
@@ -428,8 +288,8 @@ class Table(_PlotContainer, mplt.Figure):
         )
 
         for ax in self.axes:
-            ax.xaxis.set_major_formatter(_ScalarFormatter())
-            ax.yaxis.set_major_formatter(_ScalarFormatter())
+            ax.xaxis.set_major_formatter(HickoryScalarFormatter())
+            ax.yaxis.set_major_formatter(HickoryScalarFormatter())
 
         self.aratio = None
         self._legend = None
@@ -477,6 +337,9 @@ def _show_fig(fig, background=False):
 
 
 class _TkinterWindowFromArray(object):
+    """
+    requires pillow/PIL
+    """
     def __init__(self, img_array):
         from tkinter import Tk, Canvas, NW
         from PIL import ImageTk, Image
@@ -499,9 +362,6 @@ class _TkinterWindowFromArray(object):
 
 
 def _show_array_tkinter(img_array):
-    """
-    requires pillow
-    """
 
     try:
         _ = _TkinterWindowFromArray(img_array)
