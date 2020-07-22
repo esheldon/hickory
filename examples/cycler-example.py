@@ -16,7 +16,6 @@ from hickory import (
 err = 0.03
 n = 10
 x = np.linspace(0, 1, n)
-yerr = x*0 + err
 
 xlabel = r'$D ~[\mathrm{cm}]$'
 ylabel = r'$\xi ~[\mathrm{kg}]$'
@@ -30,25 +29,20 @@ lcycler = get_line_cycler()
 mcycler = get_marker_cycler()
 ccycler = get_color_cycler()
 
-for p in [1, 2, 3, 4]:
+for p in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
     dlab = r'$\mathrm{data%d}$' % p
     clab = r'$y = x^%d$' % p
 
     ytrue = x**p
     y = ytrue
 
-    plt.errorbar(
-        x, y, yerr=yerr, label=dlab,
-        marker=next(mcycler),
-        color=next(ccycler),
-        alpha=0.8,
-    )
     plt.plot(
-        x, ytrue,
-        label=clab,
+        x, y, label=dlab,
+        marker=next(mcycler),
         linestyle=next(lcycler),
         color=next(ccycler),
+        # markeredgecolor='black',
     )
 
 plt.axhline(0, color='black', linewidth=1)
-plt.show()
+plt.show(dpi=150)
