@@ -1,13 +1,13 @@
 import itertools
 
-DEFAULT_MARKER_CYCLE = ('o', 'd', '+', '^', 's', 'v', 'h', 'p', '*', 'D', 'x')
+DEFAULT_MARKER_CYCLE = ('o', 'd', '^', 's', 'v', 'h', 'p', 'P', 'H', 'X')
 
 EXTRA_LINESTYLES = {
     'loose dotted': (0, (1, 10)),
     'dense dotted': (0, (1, 1)),
 
-    'loosely dashed': (0, (5, 5)),
-    'very loosely dashed': (0, (5, 10)),
+    'loose dashed': (0, (5, 5)),
+    'very loose dashed': (0, (5, 10)),
     'dense dashed': (0, (5, 1)),
 
     'dashdotdot': (0, (3, 5, 1, 5, 1, 5)),
@@ -19,11 +19,12 @@ EXTRA_LINESTYLES = {
 DEFAULT_LINE_CYCLE = (
     'solid', 'dashed', 'dotted',
     EXTRA_LINESTYLES['dense dashdot'],
-    EXTRA_LINESTYLES['loosely dashed'],
+    EXTRA_LINESTYLES['loose dashed'],
     EXTRA_LINESTYLES['dense dashdotdot'],
     EXTRA_LINESTYLES['dense dotted'],
     'dashdot',
-    EXTRA_LINESTYLES['very loosely dashed'],
+    EXTRA_LINESTYLES['very loose dashed'],
+    EXTRA_LINESTYLES['dense dashed'],
 )
 DEFAULT_COLOR_CYCLE = [
     '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
