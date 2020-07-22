@@ -46,4 +46,3 @@ for i, plt in enumerate(tab):
     plt.set_aratio(1.0)
 
 tab.show()
-tab.savefig('table-example.pdf')
