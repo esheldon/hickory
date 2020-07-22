@@ -2,9 +2,23 @@
 color name to hex translation based on the rgb.txt -> hex conversion here
 https://github.com/timoxley/colornames
 """
+import random
 
 
 def get_color(color_name):
+    """
+    get the color value for the input name
+
+    Parameters
+    ----------
+    color_name: str
+        The name of the color.  See hickory.colors.COLORS for
+        the available color/value mapping
+
+    Returns
+    -------
+    color string value in hex
+    """
     if color_name[0] == '#':
         return color_name
 
@@ -13,6 +27,27 @@ def get_color(color_name):
         raise ValueError("no color '%s' found" % color_name)
 
     return c
+
+
+def get_random_colors(n, unique=True):
+    """
+    get a random sample of colors
+
+    Parameters
+    ----------
+    n: int
+        The number of random elements
+    unique: bool, optional
+        Whether the sample should be unique or not.  Default True.
+
+    Returns
+    -------
+    list of colors
+    """
+    if unique:
+        return random.sample(COLOR_VALS, n)
+    else:
+        return random.choices(COLOR_VALS, k=n)
 
 
 COLORS = {
@@ -609,3 +644,5 @@ COLORS = {
     'yellow4': '#8B8B00',
     'yellowgreen': '#9ACD32',
 }
+
+COLOR_VALS = [val for key, val in COLORS.items()]
