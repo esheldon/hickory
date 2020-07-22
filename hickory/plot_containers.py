@@ -187,6 +187,12 @@ class _Axes(Axes):
 
         return ret
 
+    def set(self, margin=None, **kw):
+        if margin is not None:
+            kw['xmargin'] = margin
+            kw['ymargin'] = margin
+        super().set(**kw)
+
 
 class _PlotContainer(object):
     def show(self, dpi=None):
@@ -299,6 +305,17 @@ class _PlotContainer(object):
             )
 
         return self._add_axes_internal(key, a)
+
+    def __iter__(self):
+        self._ax_index = 0
+        return self
+
+    def __next__(self):
+        if self._ax_index == len(self.axes):
+            raise StopIteration
+        plt = self.axes[self._ax_index]
+        self._ax_index += 1
+        return plt
 
 
 class Plot(_PlotContainer, mplt.Figure):
