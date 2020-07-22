@@ -6,13 +6,13 @@ user experience.
 Features
 
 - Plot class provides the functionality of matplotlib Figure but with a simpler interface.
-    - the plotting commands, as well as figure saving and viewiner are available directly from the Plot object.
-    - no need to deal with Figure and Axes separately
+    - The plotting commands, as well as figure saving and viewing are available directly from the Plot object.
+    - No need to deal with Figure and Axes separately
 - Table class represents subplots in a simpler way.
     - Access to the array of subplots is available directly from the Table
     - No need to carry around both fig and axes separately.
 - Plots can be shown on the screen without using one of the matplotlib viewer toolkits as the backend (e.g. GTK).
-    - This is an improvement over matplotlib where the library will fail to import if a display is not found, *even if no plot is ever drawn on the screen*.
+    - This is an improvement over matplotlib where the library will fail to import if a display is not found, *even if no plot is ever made*.
     - Hickory can import fine with and without a display, no need for altering backends depending on the environment.
 
 - 
