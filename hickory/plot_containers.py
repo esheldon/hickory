@@ -1,4 +1,3 @@
-import math
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as mplt
@@ -11,54 +10,44 @@ from numbers import Integral
 
 from .colors import COLORS
 from .legend import Legend
+from .constants import GOLDEN_ARATIO
 
 DEFAULT_MARKER = 'o'
 
 
 class _ScalarFormatter(matplotlib.ticker.ScalarFormatter):
+    """
+    tick formatter for linear axes
+
+    Removes mathdefault from format strings
+    """
     def _set_format(self):
-        # set the format string to format all the ticklabels
-        if len(self.locs) < 2:
-            # Temporarily augment the locations with the axis end points.
-            _locs = [*self.locs, *self.axis.get_view_interval()]
-        else:
-            _locs = self.locs
-        locs = (np.asarray(_locs) - self.offset) / 10. ** self.orderOfMagnitude
-        loc_range = np.ptp(locs)
-        # Curvilinear coordinates can yield two identical points.
-        if loc_range == 0:
-            loc_range = np.max(np.abs(locs))
-        # Both points might be zero.
-        if loc_range == 0:
-            loc_range = 1
-        if len(self.locs) < 2:
-            # We needed the end points only for the loc_range calculation.
-            locs = locs[:-2]
-        loc_range_oom = int(math.floor(math.log10(loc_range)))
-        # first estimate:
-        sigfigs = max(0, 3 - loc_range_oom)
-        # refined estimate:
-        thresh = 1e-3 * 10 ** loc_range_oom
-        while sigfigs >= 0:
-            if np.abs(locs - np.round(locs, decimals=sigfigs)).max() < thresh:
-                sigfigs -= 1
-            else:
-                break
-        sigfigs += 1
-        self.format = '%1.' + str(sigfigs) + 'f'
-        if self._usetex or self._useMathText:
-            # self.format = r'$\mathdefault{%s}$' % self.format
-            self.format = r'$%s$' % self.format
+        super()._set_format()
+
+        if 'mathdefault' in self.format:
+            self.format = _remove_mathdefault(self.format)
 
 
 class _LogFormatter(matplotlib.ticker.LogFormatterSciNotation):
+    """
+    tick formatter for log axes
+
+    Removes mathdefault from format strings
+    """
+
     def __call__(self, x, pos=None):
         s = super().__call__(x, pos=pos)
 
         if 'mathdefault' in s:
-            s = s.replace(r'\mathdefault{', '')
-            s = s[0:-2] + '$'
+            s = self.format = _remove_mathdefault(s)
+
         return s
+
+
+def _remove_mathdefault(s):
+    s = s.replace(r'\mathdefault{', '')
+    s = s[0:-2] + '$'
+    return s
 
 
 class _Axes(Axes):
@@ -91,6 +80,9 @@ class _Axes(Axes):
             linestyle=linestyle,
             **kw
         )
+
+    def set_aratio(self, aratio):
+        self.set_aspect(1.0/self.get_data_ratio()*aratio)
 
     def errorbar(self, *args, marker=None, linestyle=None, **kw):
 
@@ -216,10 +208,7 @@ class _PlotContainer(object):
         if self._legend:
             self.legend(*self._legend.args, **self._legend.kw)
 
-        if self.aratio is not None:
-            self.set_aspect(
-                1.0/self.get_data_ratio()*self.aratio
-            )
+        self._set_aratio_maybe()
 
         _show_fig(self)
 
@@ -243,12 +232,16 @@ class _PlotContainer(object):
         if self._legend:
             self.legend(*self._legend.args, **self._legend.kw)
 
-        if self.aratio is not None:
-            self.set_aspect(
-                1.0/self.get_data_ratio()*self.aratio
-            )
+        self._set_aratio_maybe()
 
         super().savefig(file, bbox_inches=bbox_inches, **kwargs)
+
+    def _set_aratio_maybe(self):
+        if hasattr(self, 'aratio') and self.aratio is not None:
+            self.set_aratio(self.aratio)
+            # self.set_aspect(
+            #     1.0/self.get_data_ratio()*self.aratio
+            # )
 
     def add_subplot(self, *args, **kwargs):
         if not len(args):
@@ -324,10 +317,14 @@ class Plot(_PlotContainer, mplt.Figure):
         subplotpars=None,  # default to rc
         tight_layout=None,  # default to rc figure.autolayout
         constrained_layout=None,  # default to rc
-        aratio=None,
+        aratio=GOLDEN_ARATIO,
         legend=None,
         **axis_kw
     ):
+
+        if figsize is None:
+            width = 6.4
+            figsize = [width, width*GOLDEN_ARATIO]
 
         super().__init__(
             figsize=figsize,
@@ -393,11 +390,15 @@ class Table(_PlotContainer, mplt.Figure):
         squeeze=True,
         subplot_kw=None,
         gridspec_kw=None,
-        # aratio=None,
+        figsize=None,
         **kw,
     ):
 
-        super().__init__(**kw)
+        # if figsize is None:
+        #     width = 6.4
+        #     figsize = [width, width*nrows/ncols]
+
+        super().__init__(figsize=figsize, **kw)
 
         self._axs = self.subplots(
             nrows=nrows,
@@ -413,7 +414,6 @@ class Table(_PlotContainer, mplt.Figure):
             ax.xaxis.set_major_formatter(_ScalarFormatter())
             ax.yaxis.set_major_formatter(_ScalarFormatter())
 
-        # self.aratio = aratio
         self.aratio = None
         self._legend = None
 

@@ -27,3 +27,5 @@ from .cyclers import (
     DEFAULT_LINE_CYCLE,
     DEFAULT_COLOR_CYCLE,
 )
+
+from .constants import GOLDEN_ARATIO
