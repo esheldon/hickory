@@ -18,8 +18,8 @@ n = 10
 x = np.linspace(0, 1, n)
 yerr = x*0 + err
 
-xlabel = r'$r ~[h^{-1}~\mathrm{Mpc}]$'
-ylabel = r'$\Delta\Sigma ~[h~\mathrm{M}_\odot]$'
+xlabel = r'$D ~[\mathrm{cm}]$'
+ylabel = r'$\xi ~[\mathrm{kg}]$'
 plt = Plot(
     xlabel=xlabel,
     ylabel=ylabel,
@@ -49,5 +49,6 @@ for p in [1, 2, 3, 4]:
         linestyle=next(lcycler),
         color=next(ccycler),
     )
+
 plt.axhline(0, color='black', linewidth=1)
 plt.show()
