@@ -1,6 +1,7 @@
 from matplotlib.axes import Axes
 from .formatters import HickoryScalarFormatter, HickoryLogFormatter
 from .colors import COLORS
+from .cyclers import get_marker_cycler, get_line_cycler
 
 DEFAULT_MARKER = 'o'
 
@@ -25,18 +26,34 @@ class HickoryAxes(Axes):
     Provide margin= option for set() which sets both x and y
     margins
     """
+
+    def __init__(self, *args, **kw):
+        self._marker_cycler = get_marker_cycler()
+        self._line_cycler = get_line_cycler()
+
+        super().__init__(*args, **kw)
+
+    def set_aratio(self, aratio):
+        self.set_aspect(1.0/self.get_data_ratio()*aratio)
+
     def plot(
         self,
         *args,
-        marker=None,
+        # marker=None,
         linestyle=None,
         **kw
     ):
 
-        marker, linestyle = self._get_marker_and_linestyle(
-            marker=marker,
-            linestyle=linestyle,
-        )
+        if 'marker' not in kw:
+            kw['marker'] = next(self._marker_cycler)
+
+        if linestyle is None:
+            linestyle = 'none'
+        # marker, linestyle = self._get_marker_and_linestyle(
+        #     marker=marker,
+        #     linestyle=linestyle,
+        #     **kw
+        # )
 
         if 'color' in kw:
             if kw['color'] in COLORS:
@@ -44,20 +61,45 @@ class HickoryAxes(Axes):
 
         return super().plot(
             *args,
-            marker=marker,
+            # marker=marker,
             linestyle=linestyle,
             **kw
         )
 
-    def set_aratio(self, aratio):
-        self.set_aspect(1.0/self.get_data_ratio()*aratio)
+    def curve(
+        self,
+        *args,
+        **kw
+    ):
 
-    def errorbar(self, *args, marker=None, linestyle=None, **kw):
+        if 'linestyle' not in kw:
+            kw['linestyle'] = next(self._line_cycler)
 
-        marker, linestyle = self._get_marker_and_linestyle(
-            marker=marker,
-            linestyle=linestyle,
-        )
+        if 'color' in kw:
+            if kw['color'] in COLORS:
+                kw['color'] = COLORS[kw['color']]
+
+        return super().plot(*args, **kw)
+
+    def errorbar(
+        self,
+        *args,
+        # marker=None,
+        linestyle=None,
+        **kw
+    ):
+
+        if 'marker' not in kw:
+            kw['marker'] = next(self._marker_cycler)
+
+        if linestyle is None:
+            linestyle = 'none'
+
+        # marker, linestyle = self._get_marker_and_linestyle(
+        #     marker=marker,
+        #     linestyle=linestyle,
+        # )
+        #
 
         if 'color' in kw:
             if kw['color'] in COLORS:
@@ -65,7 +107,7 @@ class HickoryAxes(Axes):
 
         return super().errorbar(
             *args,
-            marker=marker,
+            # marker=marker,
             linestyle=linestyle,
             **kw
         )
@@ -73,7 +115,8 @@ class HickoryAxes(Axes):
     def _get_marker_and_linestyle(self, *, marker, linestyle):
 
         if marker is None and linestyle is None:
-            marker = DEFAULT_MARKER
+            # marker = DEFAULT_MARKER
+            marker = next(self._marker_cycler)
 
         if linestyle is None:
             linestyle = 'none'
@@ -137,7 +180,7 @@ class HickoryAxes(Axes):
 
                 range = [min, max]
 
-            bins = (range[1] - range[0]) / binsize
+            bins = int(round((range[1] - range[0]) / binsize))
             if bins < 1:
                 bins = 1
 
