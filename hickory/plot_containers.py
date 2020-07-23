@@ -143,6 +143,9 @@ class _PlotContainer(object):
         self._ax_index += 1
         return plt
 
+    def __len__(self):
+        return len(self.axes)
+
 
 class Plot(_PlotContainer, mplt.Figure):
     """
