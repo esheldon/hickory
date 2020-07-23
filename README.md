@@ -39,20 +39,31 @@ hickory.plot_hist(data, bins=20)
 
 
 # object oriented tools
-plt = hickory.Plot()
-plt.plot(x, y, yerr=yerr)
+# make a Plot object
 
+plt = hickory.Plot()
+
+# any matplotlib axis plotting methods are available directly
+# plot and errorbar default to markers only
+
+plt.plot(x, y, yerr=yerr)
+plt.show(dpi=150)
+plt.savefig('test.png')
+
+# New method curve defaults to lines only
+plt.curve(x, ytrue)
+
+# New method function can plot a function represented as
+# a string or callable. Defaults to lines only
+plt.function('x**2', range=[x.min(), x.max()])
+
+# set axis parameters in the constructor
 plt = hickory.Plot(
     xlabel=r'$x ~[\mathrm{cm}]$',
     ylabel=r'$\Sigma$',
+    xlim=(-1, 1),
 )
 
-# any matplotlib axis plotting methods are available directly
-# from the Plot
-plt.plot(x, y, marker='d', linestyle='-')
-plt.errorbar(x, y2, yerr=yerr)
-plt.show()
-plt.savefig('test.png')
 
 # table of plots, 2x2
 tab = hickory.Table(nrows=2, ncols=2)
@@ -64,8 +75,13 @@ tab[1, 0].errorbar(x, x**3, yerr=yerr)
 tab[1, 1].plot(x, y**4)
 tab[1, 1].set(xlim=(1, 5), xlabel='x', ylabel='y')
 
+# iterate over plots
+for i, plt in enumerate(tab):
+    pindex = i+1
+    plt.curve(x, x**pindex)
+
 tab.show(dpi=100)
-tab.savefig('test.png', dpi=150)
+tab.savefig('table-plot.png', dpi=150)
 ```
 
 ## requirements
