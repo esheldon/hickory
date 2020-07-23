@@ -40,21 +40,17 @@ class HickoryAxes(Axes):
     def plot(
         self,
         *args,
-        # marker=None,
         linestyle=None,
         **kw
     ):
 
-        if 'marker' not in kw:
+        if 'marker' not in kw or kw['marker'] == 'cycle':
             kw['marker'] = next(self._marker_cycler)
 
         if linestyle is None:
             linestyle = 'none'
-        # marker, linestyle = self._get_marker_and_linestyle(
-        #     marker=marker,
-        #     linestyle=linestyle,
-        #     **kw
-        # )
+        elif linestyle == 'cycle':
+            linestyle = next(self._line_cycler)
 
         if 'color' in kw:
             if kw['color'] in COLORS:
@@ -62,7 +58,6 @@ class HickoryAxes(Axes):
 
         return super().plot(
             *args,
-            # marker=marker,
             linestyle=linestyle,
             **kw
         )
@@ -70,22 +65,17 @@ class HickoryAxes(Axes):
     def errorbar(
         self,
         *args,
-        # marker=None,
         linestyle=None,
         **kw
     ):
 
-        if 'marker' not in kw:
+        if 'marker' not in kw or kw['marker'] == 'cycle':
             kw['marker'] = next(self._marker_cycler)
 
         if linestyle is None:
             linestyle = 'none'
-
-        # marker, linestyle = self._get_marker_and_linestyle(
-        #     marker=marker,
-        #     linestyle=linestyle,
-        # )
-        #
+        elif linestyle == 'cycle':
+            linestyle = next(self._line_cycler)
 
         if 'color' in kw:
             if kw['color'] in COLORS:
@@ -93,7 +83,6 @@ class HickoryAxes(Axes):
 
         return super().errorbar(
             *args,
-            # marker=marker,
             linestyle=linestyle,
             **kw
         )
@@ -104,8 +93,12 @@ class HickoryAxes(Axes):
         **kw
     ):
 
-        if 'linestyle' not in kw:
+
+        if 'linestyle' not in kw or kw['linestyle'] == 'cycle':
             kw['linestyle'] = next(self._line_cycler)
+
+        if 'marker' in kw and kw['marker'] == 'cycle':
+            kw['marker'] = next(self._marker_cycler)
 
         if 'color' in kw:
             if kw['color'] in COLORS:
@@ -132,17 +125,6 @@ class HickoryAxes(Axes):
             y = eval(func)
 
         return self.curve(x, y, **kw)
-
-    def _get_marker_and_linestyle(self, *, marker, linestyle):
-
-        if marker is None and linestyle is None:
-            # marker = DEFAULT_MARKER
-            marker = next(self._marker_cycler)
-
-        if linestyle is None:
-            linestyle = 'none'
-
-        return marker, linestyle
 
     def hist(
         self,

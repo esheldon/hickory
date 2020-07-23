@@ -1,16 +1,10 @@
 """
-Make a Plot with various markers and lines.  Use cyclers
-to choose colors, lines, and markers
+Make a Plot with various markers and lines.  Use the
+automatic cyclers for colors, lines, and markers
 """
 
 import numpy as np
-from hickory import (
-    Plot,
-    Legend,
-    get_marker_cycler,
-    get_line_cycler,
-    get_color_cycler,
-)
+from hickory import Plot, Legend
 
 
 err = 0.03
@@ -25,11 +19,9 @@ plt = Plot(
     legend=Legend(loc='upper left'),
 )
 
-# Colors and markers are automatically cycled.  Let's cycle
-# both markers and linestyles
-lcycler = get_line_cycler()
-mcycler = get_marker_cycler()
-ccycler = get_color_cycler()
+# Colors and markers are automatically cycled in the plot
+# and errorbar commands. Here we set linetyle to 'cycle'
+# to also use automatic cycling
 
 for p in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
     dlab = r'$\mathrm{data%d}$' % p
@@ -40,10 +32,8 @@ for p in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
 
     plt.plot(
         x, y, label=dlab,
-        marker=next(mcycler),
-        linestyle=next(lcycler),
-        color=next(ccycler),
-        # markeredgecolor='black',
+        linestyle='cycle',
+        markeredgecolor='black',
     )
 
 plt.axhline(0, color='black', linewidth=1)
