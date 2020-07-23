@@ -25,6 +25,8 @@ plt = Plot(
     legend=Legend(loc='upper left'),
 )
 
+# Colors and markers are automatically cycled.  Let's cycle
+# both markers and linestyles
 lcycler = get_line_cycler()
 mcycler = get_marker_cycler()
 ccycler = get_color_cycler()

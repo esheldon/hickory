@@ -24,7 +24,7 @@ tab[0].plot(x, x**3, marker=None, linestyle='-')
 tab[0].set(ylabel=r'$\Sigma$')
 
 tab[1].errorbar(x, y2, yerr=y2err, markeredgecolor='black')
-tab[1].axhline(0)
+tab[1].axhline(0, color='black')
 tab[1].set(
     ylim=(-2.1, 2.1),
     xlabel=r'$x [\mathrm{cm}]$',
