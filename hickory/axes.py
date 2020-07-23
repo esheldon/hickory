@@ -1,3 +1,4 @@
+import numpy as np
 from matplotlib.axes import Axes
 from .formatters import HickoryScalarFormatter, HickoryLogFormatter
 from .colors import COLORS
@@ -66,21 +67,6 @@ class HickoryAxes(Axes):
             **kw
         )
 
-    def curve(
-        self,
-        *args,
-        **kw
-    ):
-
-        if 'linestyle' not in kw:
-            kw['linestyle'] = next(self._line_cycler)
-
-        if 'color' in kw:
-            if kw['color'] in COLORS:
-                kw['color'] = COLORS[kw['color']]
-
-        return super().plot(*args, **kw)
-
     def errorbar(
         self,
         *args,
@@ -111,6 +97,41 @@ class HickoryAxes(Axes):
             linestyle=linestyle,
             **kw
         )
+
+    def curve(
+        self,
+        *args,
+        **kw
+    ):
+
+        if 'linestyle' not in kw:
+            kw['linestyle'] = next(self._line_cycler)
+
+        if 'color' in kw:
+            if kw['color'] in COLORS:
+                kw['color'] = COLORS[kw['color']]
+
+        return super().plot(*args, **kw)
+
+    def function(
+        self,
+        func,
+        range=None,
+        npts=100,
+        **kw
+    ):
+
+        if range is None:
+            range = self._viewLim.intervalx
+
+        x = np.linspace(range[0], range[1], npts)
+
+        if callable(func):
+            y = func(x)
+        else:
+            y = eval(func)
+
+        return self.curve(x, y, **kw)
 
     def _get_marker_and_linestyle(self, *, marker, linestyle):
 

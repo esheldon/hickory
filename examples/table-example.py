@@ -26,7 +26,9 @@ for i, plt in enumerate(tab):
     yerr = ytrue*0 + err
 
     plt.errorbar(x, y, yerr=yerr)
-    plt.curve(x, ytrue)
+
+    func = 'x**%d' % pindex
+    plt.function(func, range=[-1, 1])
 
     plt.set(
         xlabel=r'$x [\mathrm{cm}]$',
