@@ -211,6 +211,11 @@ class Plot(_PlotContainer, mplt.Figure):
             constrained_layout=constrained_layout,  # default to rc
         )
 
+        if 'cycler' in axis_kw:
+            self.cycler = axis_kw.pop('cycler')
+        else:
+            self.cycler = get_default_cycle()
+
         if subplot_kw is None:
             subplot_kw = {}
         if cycler is not None:
