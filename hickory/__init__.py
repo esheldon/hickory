@@ -14,7 +14,7 @@ from .colors import (
 
 from .cyclers import (
     get_marker_cycler,
-    get_line_cycler,
+    get_linestyle_cycler,
     get_color_cycler,
     DEFAULT_MARKER_CYCLE,
     DEFAULT_LINE_CYCLE,

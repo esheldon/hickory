@@ -1,4 +1,5 @@
 import itertools
+from cycler import cycler
 
 DEFAULT_MARKER_CYCLE = ('o', 'd', '^', 's', 'v', 'h', 'p', 'P', 'H', 'X')
 
@@ -37,13 +38,37 @@ BROWNS = [
 ]
 
 
+def get_default_cycler():
+    return (
+        get_marker_cycler() +
+        get_linestyle_cycler() +
+        get_color_cycler()
+    )
+
+
+def get_default_cycle():
+    return itertools.cycle(get_default_cycler())
+
+
 def get_marker_cycler(markers=DEFAULT_MARKER_CYCLE):
+    return cycler(marker=DEFAULT_MARKER_CYCLE)
+
+
+def get_marker_cycle(markers=DEFAULT_MARKER_CYCLE):
     return itertools.cycle(markers)
 
 
-def get_line_cycler(lines=DEFAULT_LINE_CYCLE):
-    return itertools.cycle(lines)
+def get_linestyle_cycler(linestyles=DEFAULT_LINE_CYCLE):
+    return cycler(linestyle=linestyles)
+
+
+def get_linestyle_cycle(linestyles=DEFAULT_LINE_CYCLE):
+    return itertools.cycle(linestyles)
 
 
 def get_color_cycler(colors=DEFAULT_COLOR_CYCLE):
+    return cycler(color=colors)
+
+
+def get_color_cycle(colors=DEFAULT_COLOR_CYCLE):
     return itertools.cycle(colors)

@@ -76,6 +76,13 @@ class _PlotContainer(object):
             # )
 
     def add_subplot(self, *args, **kwargs):
+
+        if 'cycler' in kwargs:
+            cycler = kwargs.pop('cycler', None)
+            put_cycler = True
+        else:
+            put_cycler = False
+
         if not len(args):
             args = (1, 1, 1)
 
@@ -124,6 +131,9 @@ class _PlotContainer(object):
             #     self, *args, **kwargs,
             # )
             # ESS override class to use ours
+            if put_cycler:
+                kwargs['cycler'] = cycler
+
             a = subplot_class_factory(HickoryAxes)(
                 self,
                 *args,
@@ -180,6 +190,8 @@ class Plot(_PlotContainer, mplt.Figure):
         constrained_layout=None,  # default to rc
         aratio=GOLDEN_ARATIO,
         legend=None,
+        cycler=None,
+        subplot_kw=None,
         **axis_kw
     ):
 
@@ -199,7 +211,12 @@ class Plot(_PlotContainer, mplt.Figure):
             constrained_layout=constrained_layout,  # default to rc
         )
 
-        self.subplots()
+        if subplot_kw is None:
+            subplot_kw = {}
+        if cycler is not None:
+            subplot_kw['cycler'] = cycler
+
+        self.subplots(subplot_kw=subplot_kw)
 
         ax = self.axes[0]
 
@@ -255,6 +272,9 @@ class Table(_PlotContainer, mplt.Figure):
 
     Parameters
     ----------
+    cycler: Cycler, optional
+        A cycler to use for marker/line properties
+
     **figure_kw: keywords for the Figure class
     **subplots_kw: keywords for the subplots command
     """
@@ -268,6 +288,7 @@ class Table(_PlotContainer, mplt.Figure):
         subplot_kw=None,
         gridspec_kw=None,
         figsize=None,
+        cycler=None,
         **kw,
     ):
 
@@ -276,6 +297,11 @@ class Table(_PlotContainer, mplt.Figure):
         #     figsize = [width, width*nrows/ncols]
 
         super().__init__(figsize=figsize, **kw)
+
+        if subplot_kw is None:
+            subplot_kw = {}
+        if cycler is not None:
+            subplot_kw['cycler'] = cycler
 
         self._axs = self.subplots(
             nrows=nrows,
