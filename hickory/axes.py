@@ -2,9 +2,10 @@ import numpy as np
 from matplotlib.axes import Axes
 from .formatters import HickoryScalarFormatter, HickoryLogFormatter
 from .colors import COLORS
-from .cyclers import get_marker_cycler, get_linestyle_cycler, get_default_cycler
+from .cyclers import get_default_multi_cycler
 
 DEFAULT_MARKER = 'o'
+
 
 class HickoryAxes(Axes):
     """
@@ -29,16 +30,9 @@ class HickoryAxes(Axes):
 
     def __init__(self, *args, **kw):
 
-        if 'cycler' in kw:
-            cycler = kw.pop('cycler')
-            if cycler is False or cycler is None:
-                cycler = None
-            elif cycler is True:
-                cycler = get_default_cycler()
-            else:
-                cycler = cycler
-        else:
-            cycler = get_default_cycler()
+        cycler = kw.pop('cycler', None)
+        if cycler is None:
+            cycler = get_default_multi_cycler()
 
         self.cycler = cycler
 
@@ -51,6 +45,7 @@ class HickoryAxes(Axes):
 
     def plot(self, *args, **kw):
 
+        self._set_color(kw)
         self._set_props_default_noline(kw)
 
         if 'color' in kw:
@@ -61,18 +56,8 @@ class HickoryAxes(Axes):
 
     def errorbar(self, *args, **kw):
 
-        if 'marker' in kw and kw['marker'] == 'cycle':
-            kw.pop('marker')
-
-        # if linestyle not sent, set it to 'none' for no line
-        if 'linestyle' in kw:
-            linestyle = kw['linestyle']
-            if linestyle is None:
-                kw['linestyle'] = 'none'
-            elif 'cycle' in linestyle:
-                kw.pop('linestyle')
-        else:
-            kw['linestyle'] = 'none'
+        self._set_color(kw)
+        self._set_props_default_noline(kw)
 
         if 'color' in kw:
             if kw['color'] in COLORS:
@@ -80,50 +65,10 @@ class HickoryAxes(Axes):
 
         return super().errorbar(*args, **kw)
 
-    def _set_props_default_noline(self, kw):
-        """
-        defaulting to no line
-        """
-        if self.cycler is not None:
-            props = next(self.cycler)
-        else:
-            props = {}
-
-        if 'marker' in kw:
-            marker = kw.pop('marker')
-            if marker != 'cycle':
-                props['marker'] = marker
-
-        if 'linestyle' in kw:
-            linestyle = kw.pop('linestyle')
-            if linestyle is None:
-                props['linestyle'] = 'none'
-            elif 'cycle' not in linestyle:
-                # if cycle, we will not add it to the props, but instead 
-                # let cycler props do its thing
-                props['linestyle'] = linestype
-        else:
-            # this means no line in matplotlib land
-            props['linestyle'] = 'none'
-
-        kw.update(props)
-
     def curve(self, *args, **kw):
 
-        if 'linestyle' in kw and kw['linestyle'] == 'cycle':
-            kw.pop('linestyle')
-
-        # if linestyle not sent, set it to 'none' for no line
-        if 'marker' in kw:
-            marker = kw['marker']
-            if marker is None:
-                kw['marker'] = None
-            elif 'cycle' in marker:
-                kw.pop('marker')
-        else:
-            kw['marker'] = None
-
-        kw['marker'] = None
+        self._set_color(kw)
+        self._set_props_default_line(kw)
 
         if 'color' in kw:
             if kw['color'] in COLORS:
@@ -151,36 +96,41 @@ class HickoryAxes(Axes):
 
         return self.curve(x, y, **kw)
 
-    def _set_props_default_line(self, kw):
+    def _set_color(self, kw):
+        if 'color' not in kw:
+            kw['color'] = self.cycler.next('color')
+
+    def _set_props_default_noline(self, kw):
         """
         defaulting to no line
         """
-        if self.cycler is not None:
-            props = next(self.cycler)
+
+        has_marker = 'marker' in kw
+        if (not has_marker) or (has_marker and kw['marker'] == 'cycle'):
+            kw['marker'] = self.cycler.next('marker')
+
+        linestyle = kw.get('linestyle', None)
+        if linestyle is None:
+            kw['linestyle'] = 'none'
+        elif linestyle == 'cycle':
+            kw['linestyle'] = self.cycler.next('linestyle')
+
+    def _set_props_default_line(self, kw):
+        """
+        defaulting to a line
+        """
+
+        has_line = 'linestyle' in kw
+
+        if (not has_line) or (has_line and kw['linestyle'] == 'cycle'):
+            kw['linestyle'] = self.cycler.next('linestyle')
+        elif has_line and kw['linestyle'] is None:
+            kw['linestyle'] = 'none'
+
+        if 'marker' in kw and kw['marker'] == 'cycle':
+            kw['marker'] = self.cycler.next('marker')
         else:
-            props = {}
-
-        if 'linestyle' in kw:
-            linestyle = kw.pop('linestyle')
-            if linestyle != 'cycle':
-                if linestyle is None:
-                    linestyle = 'none'
-                props['linestyle'] = linestyle
-
-        if 'linestyle' in kw:
-            linestyle = kw.pop('linestyle')
-            if linestyle is None:
-                props['linestyle'] = 'none'
-            elif 'cycle' not in linestyle:
-                # if cycle, we will not add it to the props, but instead 
-                # let cycler props do its thing
-                props['linestyle'] = linestype
-        else:
-            # this means no line in matplotlib land
-            props['linestyle'] = 'none'
-
-        kw.update(props)
-
+            kw['marker'] = None
 
     def hist(
         self,

@@ -77,11 +77,7 @@ class _PlotContainer(object):
 
     def add_subplot(self, *args, **kwargs):
 
-        if 'cycler' in kwargs:
-            cycler = kwargs.pop('cycler', None)
-            put_cycler = True
-        else:
-            put_cycler = False
+        cycler = kwargs.pop('cycler', None)
 
         if not len(args):
             args = (1, 1, 1)
@@ -131,12 +127,11 @@ class _PlotContainer(object):
             #     self, *args, **kwargs,
             # )
             # ESS override class to use ours
-            if put_cycler:
-                kwargs['cycler'] = cycler
 
             a = subplot_class_factory(HickoryAxes)(
                 self,
                 *args,
+                cycler=cycler,
                 **kwargs
             )
 
@@ -211,15 +206,9 @@ class Plot(_PlotContainer, mplt.Figure):
             constrained_layout=constrained_layout,  # default to rc
         )
 
-        if 'cycler' in axis_kw:
-            self.cycler = axis_kw.pop('cycler')
-        else:
-            self.cycler = get_default_cycle()
-
         if subplot_kw is None:
             subplot_kw = {}
-        if cycler is not None:
-            subplot_kw['cycler'] = cycler
+        subplot_kw['cycler'] = cycler
 
         self.subplots(subplot_kw=subplot_kw)
 

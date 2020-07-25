@@ -13,12 +13,14 @@ from .colors import (
 )
 
 from .cyclers import (
+    MultiCycler,
+    get_default_multi_cycler,
     get_marker_cycler,
     get_linestyle_cycler,
     get_color_cycler,
-    DEFAULT_MARKER_CYCLE,
-    DEFAULT_LINE_CYCLE,
-    DEFAULT_COLOR_CYCLE,
+    DEFAULT_MARKERS,
+    DEFAULT_LINESTYLES,
+    DEFAULT_COLORS,
 )
 
 from .constants import GOLDEN_ARATIO

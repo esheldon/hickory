@@ -1,7 +1,7 @@
+import copy
 import itertools
-from cycler import cycler
 
-DEFAULT_MARKER_CYCLE = ('o', 'd', '^', 's', 'v', 'h', 'p', 'P', 'H', 'X')
+DEFAULT_MARKERS = ('o', 'd', '^', 's', 'v', 'h', 'p', 'P', 'H', 'X')
 
 EXTRA_LINESTYLES = {
     'loose dotted': (0, (1, 10)),
@@ -17,7 +17,7 @@ EXTRA_LINESTYLES = {
     'dense dashdotdot': (0, (3, 1, 1, 1, 1, 1)),
 }
 
-DEFAULT_LINE_CYCLE = (
+DEFAULT_LINESTYLES = (
     'solid', 'dashed', 'dotted',
     EXTRA_LINESTYLES['dense dashdot'],
     EXTRA_LINESTYLES['loose dashed'],
@@ -27,7 +27,7 @@ DEFAULT_LINE_CYCLE = (
     EXTRA_LINESTYLES['very loose dashed'],
     EXTRA_LINESTYLES['dense dashed'],
 )
-DEFAULT_COLOR_CYCLE = [
+DEFAULT_COLORS = [
     '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
     '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
 ]
@@ -38,37 +38,38 @@ BROWNS = [
 ]
 
 
-def get_default_cycler():
-    return (
-        get_marker_cycler() +
-        get_linestyle_cycler() +
-        get_color_cycler()
+class MultiCycler(object):
+    def __init__(self, **kw):
+        self._cycles = {}
+
+        for key, cyc in kw.items():
+            if hasattr(cyc, '__next__'):
+                self._cycles[key] = cyc
+            else:
+                self._cycles[key] = itertools.cycle(cyc)
+
+    def next(self, type):
+        if type not in self._cycles:
+            raise ValueError("unknown cycle: '%s'" % type)
+
+        return next(self._cycles[type])
+
+
+def get_default_multi_cycler():
+    return MultiCycler(
+        marker=get_marker_cycler(),
+        linestyle=get_linestyle_cycler(),
+        color=get_color_cycler(),
     )
 
 
-def get_default_cycle():
-    return itertools.cycle(get_default_cycler())
-
-
-def get_marker_cycler(markers=DEFAULT_MARKER_CYCLE):
-    return cycler(marker=DEFAULT_MARKER_CYCLE)
-
-
-def get_marker_cycle(markers=DEFAULT_MARKER_CYCLE):
+def get_marker_cycler(markers=DEFAULT_MARKERS):
     return itertools.cycle(markers)
 
 
-def get_linestyle_cycler(linestyles=DEFAULT_LINE_CYCLE):
-    return cycler(linestyle=linestyles)
-
-
-def get_linestyle_cycle(linestyles=DEFAULT_LINE_CYCLE):
+def get_linestyle_cycler(linestyles=DEFAULT_LINESTYLES):
     return itertools.cycle(linestyles)
 
 
-def get_color_cycler(colors=DEFAULT_COLOR_CYCLE):
-    return cycler(color=colors)
-
-
-def get_color_cycle(colors=DEFAULT_COLOR_CYCLE):
+def get_color_cycler(colors=DEFAULT_COLORS):
     return itertools.cycle(colors)

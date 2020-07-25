@@ -2,10 +2,8 @@
 Use explicit cyclers for colors, lines and markers
 """
 
-from cycler import cycler
-
 import numpy as np
-from hickory import Plot, Legend
+from hickory import Plot, Legend, MultiCycler
 
 
 err = 0.03
@@ -14,16 +12,16 @@ x = np.linspace(-1, 1, n)
 
 # cycling linesyles, markers, colors and also applying
 # markeredgecolor and alpha for all
-cyc = cycler(
+cycler = MultiCycler(
     linestyle=['solid', 'dashed', 'dotted'],
     marker=['o', 'd', '^'],
     color=['teal', 'red', 'orange'],
-) * cycler(markeredgecolor=['black']) * cycler(alpha=[0.5])
+)
 
 plt = Plot(
     xlabel='$x$',
     ylabel='$y$',
-    cycler=cyc,
+    cycler=cycler,
     legend=True,
 )
 
@@ -34,6 +32,6 @@ for fac in [1, 2, 3]:
 
     # the plot() command does not show line by default.  Setting to 'cycle'
     # tells it to use the specified cycler
-    plt.plot(x, y, label=label, linestyle='cycle')
+    plt.plot(x, y, label=label, linestyle='cycle', markeredgecolor='black')
 
 plt.show()
