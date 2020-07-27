@@ -27,3 +27,5 @@ from .constants import GOLDEN_ARATIO
 
 from . import axes
 from . import formatters
+
+from .configuration import config

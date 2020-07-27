@@ -1,4 +1,5 @@
 from .plot_containers import Plot
+from .configuration import config
 
 
 def plot(
@@ -96,7 +97,7 @@ def plot(
         show_default = True
 
     show = kw.pop('show', show_default)
-    back = kw.pop('back', False)
+    back = kw.pop('back', config['background'])
 
     if plt is None:
         axis_kw = {
@@ -243,7 +244,7 @@ def plot_hist(
         show_default = True
 
     show = kw.pop('show', show_default)
-    back = kw.pop('back', False)
+    back = kw.pop('back', config['background'])
 
     if plt is None:
         plt = Plot(
