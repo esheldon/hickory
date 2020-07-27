@@ -21,7 +21,7 @@ class _PlotContainer(object):
     display, yet can still provide a plot display, unlike matplotlib which will
     crash if you have set a toolkit backend but no display is present.
     """
-    def show(self, dpi=None, back=False):
+    def show(self, dpi=None, fork=False):
         """
         Show the plot on the display.  Requires tkinter and pillow/PIL to be
         installed and able to connect to a display
@@ -30,8 +30,8 @@ class _PlotContainer(object):
         ----------
         dpi: float, optional
             Optional dpi for image file formats such as png
-        back: bool, optional
-            If back is set to True, the plot will "go in the background"
+        fork: bool, optional
+            If fork is set to True, the plot will "go in the background"
             in a separate thread.  This allows the program to continue,
             and users in interactive sessions to do other work, with
             the plot remaining visible.
@@ -47,7 +47,7 @@ class _PlotContainer(object):
 
         self._set_aratio_maybe()
 
-        _show_fig(self, background=back)
+        _show_fig(self, fork=fork)
 
     def savefig(
         self,
@@ -327,7 +327,7 @@ class Table(_PlotContainer, mplt.Figure):
         return self._axs[indices]
 
 
-def _show_fig(fig, background=False):
+def _show_fig(fig, fork=False):
     import io
 
     io_buf = io.BytesIO()
@@ -353,7 +353,7 @@ def _show_fig(fig, background=False):
 
     io_buf.close()
 
-    if background:
+    if fork:
         from multiprocessing import Process
         p = Process(target=_show_array_tkinter, args=(img_array, ))
         p.start()
