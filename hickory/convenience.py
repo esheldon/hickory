@@ -67,6 +67,11 @@ def plot(
         If True, show the plot on the screen.  If the file= is
         not sent, this defaults to True.  If file= is sent
         this defaults to False
+    back: bool, optional
+        If back is set to True, the plot will "go in the background"
+        in a separate thread.  This allows the program to continue,
+        and users in interactive sessions to do other work, with
+        the plot remaining visible.
     file: str, optional
         Filename to write.
 
@@ -91,6 +96,7 @@ def plot(
         show_default = True
 
     show = kw.pop('show', show_default)
+    back = kw.pop('back', False)
 
     if plt is None:
         axis_kw = {
@@ -131,7 +137,7 @@ def plot(
         plt.savefig(file)
 
     if show:
-        plt.show()
+        plt.show(back=back)
 
     return plt
 
@@ -208,6 +214,11 @@ def plot_hist(
         If True, show the plot on the screen.  If the file= is
         not sent, this defaults to True.  If file= is sent
         this defaults to False
+    back: bool, optional
+        If back is set to True, the plot will "go in the background"
+        in a separate thread.  This allows the program to continue,
+        and users in interactive sessions to do other work, with
+        the plot remaining visible.
     file: str, optional
         Filename to write.
 
@@ -232,6 +243,7 @@ def plot_hist(
         show_default = True
 
     show = kw.pop('show', show_default)
+    back = kw.pop('back', False)
 
     if plt is None:
         plt = Plot(
@@ -263,6 +275,6 @@ def plot_hist(
         plt.savefig(file)
 
     if show:
-        plt.show()
+        plt.show(back=back)
 
     return plt
