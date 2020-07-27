@@ -96,7 +96,7 @@ def plot(
     else:
         show_default = True
 
-    show = kw.pop('show', show_default)
+    show = kw.pop('show', config['show'])
     fork = kw.pop('fork', config['fork_window'])
 
     if plt is None:
@@ -243,7 +243,7 @@ def plot_hist(
     else:
         show_default = True
 
-    show = kw.pop('show', show_default)
+    show = kw.pop('show', config['show'])
     fork = kw.pop('fork', config['fork_window'])
 
     if plt is None:
