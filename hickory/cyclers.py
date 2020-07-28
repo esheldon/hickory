@@ -32,9 +32,21 @@ DEFAULT_COLORS = [
     '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
 ]
 
-BROWNS = [
-    '#ff7f00', '#fdbf6f', '#1f78b4', '#e31a1c', '#b15928',
-    '#6a3d9a', '#fb9a99', '#cab2d6', '#a6cee3'
+# qualitative, color blind safe
+QUAL1 = [
+    '#a50026',
+    '#d73027',
+    '#f46d43',
+    '#fdae61',
+    '#fee090',
+    # yellow rarely shows up well
+    '#ffffbf',
+    # light blue is usually too light
+    '#e0f3f8',
+    '#abd9e9',
+    '#74add1',
+    '#4575b4',
+    '#313695',,
 ]
 
 
