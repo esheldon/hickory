@@ -48,9 +48,7 @@ class HickoryAxes(Axes):
         self._set_color(kw)
         self._set_props_default_noline(kw)
 
-        if 'color' in kw:
-            if kw['color'] in COLORS:
-                kw['color'] = COLORS[kw['color']]
+        self._set_color(kw)
 
         return super().plot(*args, **kw)
 
@@ -59,9 +57,7 @@ class HickoryAxes(Axes):
         self._set_color(kw)
         self._set_props_default_noline(kw)
 
-        if 'color' in kw:
-            if kw['color'] in COLORS:
-                kw['color'] = COLORS[kw['color']]
+        self._set_color(kw)
 
         return super().errorbar(*args, **kw)
 
@@ -70,9 +66,7 @@ class HickoryAxes(Axes):
         self._set_color(kw)
         self._set_props_default_line(kw)
 
-        if 'color' in kw:
-            if kw['color'] in COLORS:
-                kw['color'] = COLORS[kw['color']]
+        self._set_color(kw)
 
         return super().plot(*args, **kw)
 
@@ -95,10 +89,6 @@ class HickoryAxes(Axes):
             y = eval(func)
 
         return self.curve(x, y, **kw)
-
-    def _set_color(self, kw):
-        if 'color' not in kw:
-            kw['color'] = self.cycler.next('color')
 
     def _set_props_default_noline(self, kw):
         """
@@ -193,6 +183,8 @@ class HickoryAxes(Axes):
             if bins < 1:
                 bins = 1
 
+        self._set_color(kw)
+
         return super().hist(
             *args,
             bins=bins,
@@ -218,11 +210,27 @@ class HickoryAxes(Axes):
 
         return ret
 
+    def ntext(self, *args, **kw):
+        """
+        text in normalized coordinates
+        """
+        kw['transform'] = self.transAxes
+        super().text(*args, **kw)
+
+    def fill_between(self, *args, **kw):
+        self._set_color(kw)
+        super().fill_between(*args, **kw)
+
     def set(self, margin=None, **kw):
         if margin is not None:
             kw['xmargin'] = margin
             kw['ymargin'] = margin
         super().set(**kw)
+
+    def _set_color(self, kw):
+        if 'color' in kw:
+            if kw['color'] in COLORS:
+                kw['color'] = COLORS[kw['color']]
 
 
 class HickoryAxesOld(Axes):
