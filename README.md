@@ -25,13 +25,13 @@ import hickory
 
 # show plot on the screen
 hickory.plot(x, y)
-hickory.plot(x, y, yerr=yerr)
+hickory.errorbar(x, y, yerr=yerr)
 
 # write a file with no plot on screen
-hickory.plot(x, y, yerr=yerr, file='test.png')
+hickory.errorbar(x, y, yerr=yerr, file='test.png')
 
 # write a file and show on the screen
-hickory.plot(x, y, yerr=yerr, show=True, file='test.png')
+hickory.errorbar(x, y, yerr=yerr, show=True, file='test.png')
 
 # convenience function for plotting histograms
 hickory.plot_hist(data, binsize=0.1)
@@ -46,7 +46,7 @@ plt = hickory.Plot()
 # any matplotlib axis plotting methods are available directly
 # plot and errorbar default to markers only
 
-plt.plot(x, y, yerr=yerr)
+plt.errorbar(x, y, yerr=yerr)
 plt.show(dpi=150)
 plt.savefig('test.png')
 

@@ -6,7 +6,6 @@ import numpy as np
 from hickory import Plot, Legend, MultiCycler
 
 
-err = 0.03
 n = 10
 x = np.linspace(-1, 1, n)
 
