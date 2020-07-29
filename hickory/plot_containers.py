@@ -1,190 +1,234 @@
-"""
-TODO:
-    - plotting 2d arrays as images
-    - 2d histograms, e.g. using hexbin under the hood
-    - non-symmetric error bars
-    - fill between curves etc.
-    - plotting functions
-    - figure size: maybe have it in write/show and force a rerender
-      when that is sent?
-"""
 import numpy as np
-import tempfile
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as mplt
+from matplotlib.axes import (
+    SubplotBase,
+    subplot_class_factory,
+)
+from numbers import Integral
 
 from .legend import Legend
+from .constants import GOLDEN_ARATIO
+from .formatters import HickoryScalarFormatter
+from .axes import HickoryAxes
 
 
 class _PlotContainer(object):
-    def write(self, fname, dpi=None):
+    """
+    over-ride the show and savefig methods.
+
+    Showing does does not use one of the toolkit backends from matplotlib, but
+    rather Tkinter, and thus hickory can be imported with and without a
+    display, yet can still provide a plot display, unlike matplotlib which will
+    crash if you have set a toolkit backend but no display is present.
+    """
+    def show(self, dpi=None, fork=False):
+        """
+        Show the plot on the display.  Requires tkinter and pillow/PIL to be
+        installed and able to connect to a display
+
+        Parameters
+        ----------
+        dpi: float, optional
+            Optional dpi for image file formats such as png
+        fork: bool, optional
+            If fork is set to True, the plot will "go in the background"
+            in a separate thread.  This allows the program to continue,
+            and users in interactive sessions to do other work, with
+            the plot remaining visible.
+        """
+
+        if dpi is not None:
+            # need to do it here or else bbox is wrong after savefig (does not
+            # store it permanently)
+            self.set_dpi(dpi)
+
+        if self._legend:
+            self.legend(*self._legend.args, **self._legend.kw)
+
+        self._set_aratio_maybe()
+
+        _show_fig(self, fork=fork)
+
+    def savefig(
+        self,
+        file,
+        *,
+        bbox_inches='tight',
+        **kwargs
+    ):
         """
         write the plot to a file
 
         Parameters
         ----------
-        fname: str
+        file: str
             Filename to write
-        dpi: float, optional
-            Optional dpi for image file formats such as png
+        **kw see savefig docs for additional keywords
         """
-        fig = self._render()
-        if dpi is not None:
-            fig.set_dpi(dpi)
 
-        fig.savefig(fname, bbox_inches='tight')
+        if self._legend:
+            self.legend(*self._legend.args, **self._legend.kw)
 
-    def show(self, dpi=None):
-        """
-        show the plot on the display.  Requires tkinter
-        to be installed and able to connect to a display
+        self._set_aratio_maybe()
 
-        Parameters
-        ----------
-        dpi: float, optional
-            Optional dpi for image file formats such as png
-        """
-        fig = self._render()
-        _show_fig(fig, dpi=dpi)
+        super().savefig(file, bbox_inches=bbox_inches, **kwargs)
 
-    def _render(self):
-        raise NotImplementedError('implement _render()')
+    def _set_aratio_maybe(self):
+        if hasattr(self, 'aratio') and self.aratio is not None:
+            self.set_aratio(self.aratio)
+            # self.set_aspect(
+            #     1.0/self.get_data_ratio()*self.aratio
+            # )
+
+    def add_subplot(self, *args, **kwargs):
+
+        cycler = kwargs.pop('cycler', None)
+
+        if not len(args):
+            args = (1, 1, 1)
+
+        if len(args) == 1 and isinstance(args[0], Integral):
+            if not 100 <= args[0] <= 999:
+                raise ValueError("Integer subplot specification must be a "
+                                 "three-digit number, not {}".format(args[0]))
+            args = tuple(map(int, str(args[0])))
+
+        if 'figure' in kwargs:
+            # Axes itself allows for a 'figure' kwarg, but since we want to
+            # bind the created Axes to self, it is not allowed here.
+            raise TypeError(
+                "add_subplot() got an unexpected keyword argument 'figure'")
+
+        if isinstance(args[0], SubplotBase):
+
+            a = args[0]
+            if a.get_figure() is not self:
+                raise ValueError(
+                    "The Subplot must have been created in the present figure")
+            # make a key for the subplot (which includes the axes object id
+            # in the hash)
+            key = self._make_key(*args, **kwargs)
+        else:
+            projection_class, kwargs, key = \
+                self._process_projection_requirements(*args, **kwargs)
+
+            # try to find the axes with this key in the stack
+            ax = self._axstack.get(key)
+
+            if ax is not None:
+                if isinstance(ax, projection_class):
+                    # the axes already existed, so set it as active & return
+                    self.sca(ax)
+                    return ax
+                else:
+                    # Undocumented convenience behavior:
+                    # subplot(111); subplot(111, projection='polar')
+                    # will replace the first with the second.
+                    # Without this, add_subplot would be simpler and
+                    # more similar to add_axes.
+                    self._axstack.remove(ax)
+
+            # a = subplot_class_factory(projection_class)(
+            #     self, *args, **kwargs,
+            # )
+            # ESS override class to use ours
+
+            a = subplot_class_factory(HickoryAxes)(
+                self,
+                *args,
+                cycler=cycler,
+                **kwargs
+            )
+
+        return self._add_axes_internal(key, a)
+
+    def __iter__(self):
+        self._ax_index = 0
+        return self
+
+    def __next__(self):
+        if self._ax_index == len(self.axes):
+            raise StopIteration
+        plt = self.axes[self._ax_index]
+        self._ax_index += 1
+        return plt
 
 
-class Plot(_PlotContainer):
+class Plot(_PlotContainer, mplt.Figure):
     """
-    A plot container base class
+    A plot container.  This class provides an interface to both
+    the Figure and axis functionality in one.
 
     Parameters
     ----------
-    xlabel: str
-        Label for the x axis
-    ylabel: str
-        Label for the y axis
-    aratio: float
-        Axis ratio of output plot, ysize/xsize
-    legend: Legend or bool
-        If a boolean True, the legend is auto-generated.  For more control send
-        a Legend instance.
+    aratio: float, optional
+        Axis ratio of plot, ysize/xsize. Default is the
+        1/(golden ratio) ~ 0.618
+    legend: bool or Legend instance
+        If True, a legend is created. You can also send a Legend() instance.
+        If None or False, no legend is created
+
+    Additional Keywords for the Plot/matplotlib Figure.  See docs for
+        the matplotlib Figure class
+
+        figsize dpi facecolor edgecolor linewidth
+        frameon subplotpars tight_layout constrained_layout
+
+    Additional Keywords for setting axis parameters such as
+        xlabel, xlim, margin (or xmargin/ymargin), etc.
     """
     def __init__(
         self,
-        *,
-        xlabel=None,
-        ylabel=None,
-        aratio=None,
+        figsize=None,
+        dpi=None,
+        facecolor=None,
+        edgecolor=None,
+        linewidth=0.0,
+        frameon=None,
+        subplotpars=None,  # default to rc
+        tight_layout=None,  # default to rc figure.autolayout
+        constrained_layout=None,  # default to rc
+        aratio=GOLDEN_ARATIO,
         legend=None,
+        cycler=None,
+        subplot_kw=None,
+        **axis_kw
     ):
 
-        self.xlabel = xlabel
-        self.ylabel = ylabel
+        if figsize is None:
+            width = 6.4
+            figsize = [width, width*GOLDEN_ARATIO]
+
+        super().__init__(
+            figsize=figsize,
+            dpi=dpi,
+            facecolor=facecolor,
+            edgecolor=edgecolor,
+            linewidth=linewidth,
+            frameon=frameon,
+            subplotpars=subplotpars,
+            tight_layout=tight_layout,
+            constrained_layout=constrained_layout,  # default to rc
+        )
+
+        if subplot_kw is None:
+            subplot_kw = {}
+        subplot_kw['cycler'] = cycler
+
+        self.subplots(subplot_kw=subplot_kw)
+
+        ax = self.axes[0]
+
+        # default formatters
+        ax.xaxis.set_major_formatter(HickoryScalarFormatter())
+        ax.yaxis.set_major_formatter(HickoryScalarFormatter())
+
+        self.set(**axis_kw)
+
         self.aratio = aratio
-        self.legend = legend
-        self.reset()
+        self._set_legend(legend)
 
-    def reset(self):
-        """
-        reset the object list and rendering
-        """
-        self.objlist = []
-
-    def add(self, *args):
-        """
-        add a new object to be plotted.  This resets the
-        rendered state
-
-        Parameters
-        ----------
-        *args: objects
-            A set of objects to be rendered, e.g. Points.
-        """
-        self.objlist += args
-
-    def render_axis(self, ax):
-        """
-        render into the specified axis
-
-        Parameters
-        -----------
-        ax: e.g. Axis
-            An axis object
-        """
-        ax.clear()
-
-        if self.xlabel is not None:
-            ax.set_xlabel(self.xlabel)
-
-        if self.ylabel is not None:
-            ax.set_ylabel(self.ylabel)
-
-        for obj in self.objlist:
-            obj._add_to_axes(ax)
-
-        legend = self.legend
-        if legend is not None:
-            ax.legend(
-                loc=legend.loc,
-                frameon=legend.frame,
-                borderaxespad=legend.borderaxespad,
-                framealpha=legend.framealpha,
-            )
-
-        # needs to come after plotting
-        if self.aratio is not None:
-            ax.set_aspect(
-                1.0/ax.get_data_ratio()*self.aratio
-            )
-
-    @property
-    def xlabel(self):
-        """
-        get the x label
-        """
-        return self._xlabel
-
-    @xlabel.setter
-    def xlabel(self, xlabel):
-        """
-        get the x label
-        """
-        self._xlabel = xlabel
-
-    @property
-    def ylabel(self):
-        """
-        get the y label
-        """
-        return self._ylabel
-
-    @ylabel.setter
-    def ylabel(self, ylabel):
-        """
-        get the y label
-        """
-        self._ylabel = ylabel
-
-    @property
-    def aratio(self):
-        """
-        get the y label
-        """
-        return self._aratio
-
-    @aratio.setter
-    def aratio(self, aratio):
-        """
-        get the y label
-        """
-        self._aratio = aratio
-
-    @property
-    def legend(self):
-        """
-        get the legend instance
-        """
-        return self._legend
-
-    @legend.setter
-    def legend(self, legend):
+    def _set_legend(self, legend):
         """
         set the legend
 
@@ -203,133 +247,96 @@ class Plot(_PlotContainer):
         else:
             self._legend = None
 
-    def _show_from_file(self, dpi=None):
-        with tempfile.TemporaryDirectory() as dir:
-            fname = tempfile.mktemp(dir=dir, suffix='.png')
-            self.write(fname, dpi=dpi)
+    def legend(self, *args, **kw):
+        self.axes[0].legend(*args, **kw)
 
-            _show_file_tkinter(fname)
-
-    def _render(self):
-        self.fig, self.ax = plt.subplots()
-        self.render_axis(self.ax)
-
-        return self.fig
+    def __getattr__(self, name):
+        """
+        pass on calls to the axis, e.g. making a plot
+        """
+        return getattr(self.axes[0], name)
 
 
-class Table(_PlotContainer):
+class Table(_PlotContainer, mplt.Figure):
     """
-    Represent a table of plots
+    A plot container for a table of subplots.  Provides
+    access to the Figure and subplot grid in one interface.
+
+    e.g.
+
+    tab = Table(nrows=2, ncols=3, ...)
+    tab[1, 0].plot(x, y)
+    tab[0, 1].set(xlabel='x', ylabel='y')
+    etc.
 
     Parameters
     ----------
-    nrows: int
-        Number of rows in table
-    ncols: int
-        Number of columns in the table
+    cycler: Cycler, optional
+        A cycler to use for marker/line properties
+
+    **figure_kw: keywords for the Figure class
+    **subplots_kw: keywords for the subplots command
     """
-    def __init__(self, *, nrows, ncols):
-        self.nrows = int(nrows)
-        self.ncols = int(ncols)
-        if self.nrows < 1:
-            raise ValueError("got nrows %d < 1" % self.nrows)
-        if self.ncols < 1:
-            raise ValueError("got ncols %d < 1" % self.ncols)
+    def __init__(
+        self,
+        nrows=1,
+        ncols=1,
+        sharex=False,
+        sharey=False,
+        squeeze=True,
+        subplot_kw=None,
+        gridspec_kw=None,
+        figsize=None,
+        cycler=None,
+        **kw,
+    ):
 
-        self.reset()
+        # if figsize is None:
+        #     width = 6.4
+        #     figsize = [width, width*nrows/ncols]
 
-    def reset(self):
-        """
-        Completely reset the table.  All plots are set to None
-        """
-        self.fig, self.axes = plt.subplots(nrows=self.nrows, ncols=self.ncols)
-        self._plots = []
-        for row in range(self.nrows):
-            col_plots = []
-            for col in range(self.ncols):
-                col_plots.append(None)
-            self._plots.append(col_plots)
+        super().__init__(figsize=figsize, **kw)
 
-    def _render(self):
-        """
-        render the table if needed
+        if subplot_kw is None:
+            subplot_kw = {}
+        if cycler is not None:
+            subplot_kw['cycler'] = cycler
 
-        Each plot is checked to see if it has been rendred
-        """
-        for row in range(self.nrows):
-            for col in range(self.ncols):
+        self._axs = self.subplots(
+            nrows=nrows,
+            ncols=ncols,
+            sharex=sharex,
+            sharey=sharey,
+            squeeze=squeeze,
+            subplot_kw=subplot_kw,
+            gridspec_kw=gridspec_kw,
+        )
 
-                ax = self.axes[row, col]
+        for ax in self.axes:
+            ax.xaxis.set_major_formatter(HickoryScalarFormatter())
+            ax.yaxis.set_major_formatter(HickoryScalarFormatter())
 
-                plot = self[row, col]
-                if plot is not None:
-                    print('rendering:', row, col)
-                    plot.render_axis(ax)
-                else:
-                    ax.axis('off')
-
-        return self.fig
+        self.aratio = None
+        self._legend = None
 
     def __getitem__(self, indices):
-        row, col = self._get_row_col(indices)
-        return self._plots[row][col]
-
-    def __setitem__(self, indices, plot):
         """
-        set a plot
-
-        Parameters
-        ----------
-        row, col: int
-            row and column indices
-        plot: plot container or None
-            If None, the plot is set to invisible
+        pass on calls to the axis, e.g. making a plot
         """
 
-        row, col = self._get_row_col(indices)
-
-        self._plots[row][col] = plot
-
-    def _get_row_col(self, indices):
-        if len(indices) != 2:
-            raise ValueError(
-                "to set a plot use table[row, col] = plot"
-            )
-
-        row, col = indices
-
-        if row < 0 or row > self.nrows-1:
-            raise ValueError(
-                "row %d out of range [%d, %d]" % (row, self.nrows, self.ncols)
-            )
-        if col < 0 or col > self.ncols-1:
-            raise ValueError(
-                "col %d out of range [%d, %d]" % (col, self.ncols, self.ncols)
-            )
-
-        return row, col
-
-def _show_viewer(fname, viewer='feh'):
-    import subprocess
-    command = [viewer, fname]
-    subprocess.check_call(command)
+        return self._axs[indices]
 
 
-def _show_fig(fig, dpi=None):
+def _show_fig(fig, fork=False):
     import io
-
-    if dpi is not None:
-        # need to do it here or else bbox is wrong after savefig (does not
-        # store it permanently)
-        fig.set_dpi(dpi)
 
     io_buf = io.BytesIO()
 
-    # cannot set bbox_inches tight here because in fig.canvas.print_figure
-    # it does not store the bbox permanently it resets it to what it was
-    # before the call
+    # cannot set bbox_inches tight here because in fig.canvas.print_figure it
+    # does not store the bbox permanently, it resets it to what it was before
+    # the call
 
-    fig.savefig(io_buf, format='raw')
+    fig.savefig(io_buf, bbox_inches=None, format='raw')
     io_buf.seek(0)
 
     shape = (
@@ -346,14 +353,18 @@ def _show_fig(fig, dpi=None):
 
     io_buf.close()
 
-    # from multiprocessing import Process
-    # p = Process(target=_show_array_tkinter, args=(img_array, ))
-    # p.start()
-
-    _show_array_tkinter(img_array)
+    if fork:
+        from multiprocessing import Process
+        p = Process(target=_show_array_tkinter, args=(img_array, ))
+        p.start()
+    else:
+        _show_array_tkinter(img_array)
 
 
 class _TkinterWindowFromArray(object):
+    """
+    requires pillow/PIL
+    """
     def __init__(self, img_array):
         from tkinter import Tk, Canvas, NW
         from PIL import ImageTk, Image
@@ -376,44 +387,8 @@ class _TkinterWindowFromArray(object):
 
 
 def _show_array_tkinter(img_array):
-    """
-    requires pillow
-    """
 
     try:
         _ = _TkinterWindowFromArray(img_array)
-    except KeyboardInterrupt:
-        pass
-
-
-class _TkinterWindowFromFile(object):
-    def __init__(self, fname):
-        from tkinter import Tk, Canvas, NW
-        from PIL import ImageTk, Image
-
-        img = Image.open(fname)
-        w, h = img.size
-
-        self.root = Tk()
-        self.root.bind('q', self.destroy)
-
-        canvas = Canvas(self.root, width=w, height=h)
-        canvas.pack()
-
-        self.imgtk = ImageTk.PhotoImage(img)
-        canvas.create_image(0, 0, anchor=NW, image=self.imgtk)
-        self.root.mainloop()
-
-    def destroy(self, even):
-        self.root.destroy()
-
-
-def _show_file_tkinter(fname):
-    """
-    requires pillow
-    """
-
-    try:
-        _ = _TkinterWindowFromFile(fname)
     except KeyboardInterrupt:
         pass
