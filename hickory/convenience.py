@@ -87,11 +87,9 @@ def plot(
     """
     file = kw.pop('file', None)
     if file is not None:
-        show_default = False
+        show = kw.pop('show', False)
     else:
-        show_default = True
-
-    show = kw.pop('show', config['show'])
+        show = kw.pop('show', config['show'])
 
     if plt is None:
         axis_kw = {
@@ -228,11 +226,9 @@ def plot_hist(
 
     file = kw.pop('file', None)
     if file is not None:
-        show_default = False
+        show = kw.pop('show', False)
     else:
-        show_default = True
-
-    show = kw.pop('show', config['show'])
+        show = kw.pop('show', config['show'])
 
     if plt is None:
         plt = Plot(

@@ -12,6 +12,12 @@ from .colors import (
     COLOR_VALS,
 )
 
+from .markers import (
+    get_marker,
+    MARKERS,
+)
+
+
 from .cyclers import (
     MultiCycler,
     get_default_multi_cycler,

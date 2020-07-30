@@ -1,4 +1,3 @@
-import copy
 import itertools
 
 DEFAULT_MARKERS = ('o', 'd', '^', 's', 'v', 'h', 'p', 'P', 'H', 'X')

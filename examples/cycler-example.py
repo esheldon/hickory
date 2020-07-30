@@ -31,7 +31,7 @@ for p in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
 
     # the plot() command does not show line by default.  Setting to 'cycle'
     # tells it to use the specified cycler
-    plt.plot( x, y, label=dlab, linestyle='cycle', markeredgecolor='black')
+    plt.plot(x, y, label=dlab, linestyle='cycle', markeredgecolor='black')
 
 plt.axhline(0, color='black', linewidth=1)
 plt.show(dpi=150)

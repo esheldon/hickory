@@ -22,4 +22,3 @@ plt.hist(
 )
 
 plt.show()
-

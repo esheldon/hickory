@@ -3,7 +3,7 @@ Use explicit cyclers for colors, lines and markers
 """
 
 import numpy as np
-from hickory import Plot, Legend, MultiCycler
+from hickory import Plot, MultiCycler
 
 
 n = 10
