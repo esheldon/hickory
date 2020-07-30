@@ -9,7 +9,8 @@ config = {
     # on the screen, except in jupyter
     'show': False if _name == 'ZMQInteractiveShell' else True,
 
+    # doesn't seem to work right, turning off this feature for now
     # if set, the convenience functions put the plot into
     # the background by default
-    'fork_window': True if _name == 'TerminalInteractiveShell' else False,
+    # 'fork_window': True if _name == 'TerminalInteractiveShell' else False,
 }
