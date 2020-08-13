@@ -366,29 +366,28 @@ class _TkinterWindowFromArray(object):
     requires pillow/PIL
     """
     def __init__(self, img_array):
-        from tkinter import Tk, Canvas, NW
+        from tkinter import Tk, Canvas, NW, TclError
         from PIL import ImageTk, Image
 
-        img = Image.fromarray(img_array)
-        w, h = img.size
+        try:
+            img = Image.fromarray(img_array)
+            w, h = img.size
 
-        self.root = Tk()
-        self.root.bind('q', self.destroy)
+            self.root = Tk()
+            self.root.bind('q', self.destroy)
 
-        canvas = Canvas(self.root, width=w, height=h)
-        canvas.pack()
+            canvas = Canvas(self.root, width=w, height=h)
+            canvas.pack()
 
-        self.imgtk = ImageTk.PhotoImage(img)
-        canvas.create_image(0, 0, anchor=NW, image=self.imgtk)
-        self.root.mainloop()
+            self.imgtk = ImageTk.PhotoImage(img)
+            canvas.create_image(0, 0, anchor=NW, image=self.imgtk)
+            self.root.mainloop()
+        except TclError:
+            raise KeyboardInterrupt
 
     def destroy(self, even):
         self.root.destroy()
 
 
 def _show_array_tkinter(img_array):
-
-    try:
-        _ = _TkinterWindowFromArray(img_array)
-    except KeyboardInterrupt:
-        pass
+    _ = _TkinterWindowFromArray(img_array)
