@@ -197,6 +197,11 @@ class HickoryAxes(Axes):
             **kw
         )
 
+
+    def bar(self, *args, **kw):
+        self._set_color(kw)
+        return super().bar(*args, **kw)
+
     def set_yscale(self, value, **kwargs):
         ret = super().set_yscale(value, **kwargs)
         if value == 'log':
@@ -230,6 +235,14 @@ class HickoryAxes(Axes):
         if margin is not None:
             kw['xmargin'] = margin
             kw['ymargin'] = margin
+
+        # for these, kw are not passed on
+        if 'yscale' in kw:
+            self.set_yscale(kw.pop('yscale'))
+
+        if 'xscale' in kw:
+            self.set_xscale(kw.pop('xscale'))
+
         super().set(**kw)
 
     def _set_color(self, kw):
