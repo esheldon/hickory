@@ -168,21 +168,22 @@ class HickoryAxes(Axes):
         Plot instance
         """
 
+        if range is None:
+
+            if len(args) == 0:
+                raise ValueError("send data in position 1")
+
+            x = args[0]
+
+            if min is None:
+                min = x.min()
+            if max is None:
+                max = x.max()
+
+            range = [min, max]
+
         # binsize takes precedence over bins
         if binsize is not None:
-            if range is None:
-
-                if len(args) == 0:
-                    raise ValueError("send data in position 1")
-
-                x = args[0]
-
-                if min is None:
-                    min = x.min()
-                if max is None:
-                    max = x.max()
-
-                range = [min, max]
 
             bins = int(round((range[1] - range[0]) / binsize))
             if bins < 1:
