@@ -120,68 +120,6 @@ class _PlotContainer(object):
             key = (projection_class, pkw)
         return self._add_axes_internal(ax, key)
 
-    def add_subplot_oldmatplotlib(self, *args, **kwargs):
-
-        cycler = kwargs.pop('cycler', None)
-
-        if not len(args):
-            args = (1, 1, 1)
-
-        if len(args) == 1 and isinstance(args[0], Integral):
-            if not 100 <= args[0] <= 999:
-                raise ValueError("Integer subplot specification must be a "
-                                 "three-digit number, not {}".format(args[0]))
-            args = tuple(map(int, str(args[0])))
-
-        if 'figure' in kwargs:
-            # Axes itself allows for a 'figure' kwarg, but since we want to
-            # bind the created Axes to self, it is not allowed here.
-            raise TypeError(
-                "add_subplot() got an unexpected keyword argument 'figure'")
-
-        if isinstance(args[0], SubplotBase):
-
-            a = args[0]
-            if a.get_figure() is not self:
-                raise ValueError(
-                    "The Subplot must have been created in the present figure")
-            # make a key for the subplot (which includes the axes object id
-            # in the hash)
-            key = self._make_key(*args, **kwargs)
-        else:
-            projection_class, kwargs, key = \
-                self._process_projection_requirements(*args, **kwargs)
-
-            # try to find the axes with this key in the stack
-            ax = self._axstack.get(key)
-
-            if ax is not None:
-                if isinstance(ax, projection_class):
-                    # the axes already existed, so set it as active & return
-                    self.sca(ax)
-                    return ax
-                else:
-                    # Undocumented convenience behavior:
-                    # subplot(111); subplot(111, projection='polar')
-                    # will replace the first with the second.
-                    # Without this, add_subplot would be simpler and
-                    # more similar to add_axes.
-                    self._axstack.remove(ax)
-
-            # a = subplot_class_factory(projection_class)(
-            #     self, *args, **kwargs,
-            # )
-            # ESS override class to use ours
-
-            a = subplot_class_factory(HickoryAxes)(
-                self,
-                *args,
-                cycler=cycler,
-                **kwargs
-            )
-
-        return self._add_axes_internal(key, a)
-
     def __iter__(self):
         self._ax_index = 0
         return self
