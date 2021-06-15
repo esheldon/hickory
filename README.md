@@ -87,5 +87,5 @@ tab.savefig('table-plot.png', dpi=150)
 ## requirements
 
 - numpy
-- matplotlib
+- matplotlib >=3.4
 - Optional dependency: pillow and Tkinter for viewing plots on screen
