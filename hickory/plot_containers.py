@@ -84,6 +84,46 @@ class _PlotContainer(object):
 
         cycler = kwargs.pop('cycler', None)
 
+        if 'figure' in kwargs:
+            # Axes itself allows for a 'figure' kwarg, but since we want to
+            # bind the created Axes to self, it is not allowed here.
+            raise TypeError(
+                "add_subplot() got an unexpected keyword argument 'figure'")
+
+        if len(args) == 1 and isinstance(args[0], SubplotBase):
+            ax = args[0]
+            key = ax._projection_init
+            if ax.get_figure() is not self:
+                raise ValueError("The Subplot must have been created in "
+                                 "the present figure")
+        else:
+            if not args:
+                args = (1, 1, 1)
+            # Normalize correct ijk values to (i, j, k) here so that
+            # add_subplot(211) == add_subplot(2, 1, 1).  Invalid values will
+            # trigger errors later (via SubplotSpec._from_subplot_args).
+            if (len(args) == 1 and isinstance(args[0], Integral)
+                    and 100 <= args[0] <= 999):
+                args = tuple(map(int, str(args[0])))
+            projection_class, pkw = self._process_projection_requirements(
+                *args, **kwargs)
+
+            # ESS override class to use ours
+            # ax = subplot_class_factory(projection_class)(self, *args, **pkw)
+            ax = subplot_class_factory(HickoryAxes)(
+                self,
+                *args,
+                cycler=cycler,
+                **pkw,
+            )
+
+            key = (projection_class, pkw)
+        return self._add_axes_internal(ax, key)
+
+    def add_subplot_oldmatplotlib(self, *args, **kwargs):
+
+        cycler = kwargs.pop('cycler', None)
+
         if not len(args):
             args = (1, 1, 1)
 
