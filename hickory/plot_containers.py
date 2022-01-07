@@ -40,7 +40,236 @@ class _PlotContainer(object):
         if dpi is not None:
             # need to do it here or else bbox is wrong after savefig (does not
             # store it permanently)
-            self.set_dpi(dpi)
+            self.axes[0].set_dpi(dpi)
+
+        if self._legend:
+            self.legend(*self._legend.args, **self._legend.kw)
+
+        self._set_aratio_maybe()
+
+        self.fig.show()
+        # input('hit enter')
+        mplt.show()
+        # _show_fig(self, fork=fork)
+
+    def savefig(
+        self,
+        file,
+        *,
+        bbox_inches='tight',
+        **kwargs
+    ):
+        """
+        write the plot to a file
+
+        Parameters
+        ----------
+        file: str
+            Filename to write
+        **kw see savefig docs for additional keywords
+        """
+
+        if self._legend:
+            self.legend(*self._legend.args, **self._legend.kw)
+
+        self._set_aratio_maybe()
+
+        self.fig.savefig(file, bbox_inches=bbox_inches, **kwargs)
+
+    def set_aratio(self, aratio):
+        self.ax.set_aspect(1.0/self.ax.get_data_ratio()*aratio)
+
+    def _set_aratio_maybe(self):
+        if hasattr(self, 'aratio') and self.aratio is not None:
+            self.set_aratio(self.aratio)
+            # self.set_aspect(
+            #     1.0/self.get_data_ratio()*self.aratio
+            # )
+
+    def add_subplot(self, *args, **kwargs):
+
+        cycler = kwargs.pop('cycler', None)
+
+        if 'figure' in kwargs:
+            # Axes itself allows for a 'figure' kwarg, but since we want to
+            # bind the created Axes to self, it is not allowed here.
+            raise TypeError(
+                "add_subplot() got an unexpected keyword argument 'figure'")
+
+        if len(args) == 1 and isinstance(args[0], SubplotBase):
+            ax = args[0]
+            key = ax._projection_init
+            if ax.get_figure() is not self:
+                raise ValueError("The Subplot must have been created in "
+                                 "the present figure")
+        else:
+            if not args:
+                args = (1, 1, 1)
+            # Normalize correct ijk values to (i, j, k) here so that
+            # add_subplot(211) == add_subplot(2, 1, 1).  Invalid values will
+            # trigger errors later (via SubplotSpec._from_subplot_args).
+            if (len(args) == 1 and isinstance(args[0], Integral)
+                    and 100 <= args[0] <= 999):
+                args = tuple(map(int, str(args[0])))
+            projection_class, pkw = self._process_projection_requirements(
+                *args, **kwargs)
+
+            # ESS override class to use ours
+            # ax = subplot_class_factory(projection_class)(self, *args, **pkw)
+            ax = subplot_class_factory(HickoryAxes)(
+                self,
+                *args,
+                cycler=cycler,
+                **pkw,
+            )
+
+            key = (projection_class, pkw)
+        return self._add_axes_internal(ax, key)
+
+    def __iter__(self):
+        self._ax_index = 0
+        return self
+
+    def __next__(self):
+        if self._ax_index == len(self.axes):
+            raise StopIteration
+        plt = self.axes[self._ax_index]
+        self._ax_index += 1
+        return plt
+
+
+class Plot(_PlotContainer):
+    """
+    A plot container.  This class provides an interface to both
+    the Figure and axis functionality in one.
+
+    Parameters
+    ----------
+    aratio: float, optional
+        Axis ratio of plot, ysize/xsize. Default is the
+        1/(golden ratio) ~ 0.618
+    legend: bool or Legend instance
+        If True, a legend is created. You can also send a Legend() instance.
+        If None or False, no legend is created
+
+    Additional Keywords for the Plot/matplotlib Figure.  See docs for
+        the matplotlib Figure class
+
+        figsize dpi facecolor edgecolor linewidth
+        frameon subplotpars tight_layout constrained_layout
+
+    Additional Keywords for setting axis parameters such as
+        xlabel, xlim, margin (or xmargin/ymargin), etc.
+    """
+    def __init__(
+        self,
+        figsize=None,
+        dpi=None,
+        facecolor=None,
+        edgecolor=None,
+        linewidth=0.0,
+        frameon=None,
+        subplotpars=None,  # default to rc
+        tight_layout=None,  # default to rc figure.autolayout
+        constrained_layout=None,  # default to rc
+        aratio=GOLDEN_ARATIO,
+        legend=None,
+        cycler=None,
+        subplot_kw=None,
+        **axis_kw
+    ):
+
+        if figsize is None:
+            width = 6.4
+            figsize = [width, width*aratio]
+
+        self.fig = mplt.figure(
+            figsize=figsize,
+            dpi=dpi,
+            facecolor=facecolor,
+            edgecolor=edgecolor,
+            linewidth=linewidth,
+            frameon=frameon,
+            subplotpars=subplotpars,
+            tight_layout=tight_layout,
+            constrained_layout=constrained_layout,  # default to rc
+        )
+
+        # if subplot_kw is None:
+        #     subplot_kw = {}
+        # subplot_kw['cycler'] = cycler
+
+        self.fig.subplots(subplot_kw=subplot_kw)
+        self.axes = self.fig.axes
+        self.ax = self.fig.axes[0]
+
+        # default formatters
+        self.ax.xaxis.set_major_formatter(HickoryScalarFormatter())
+        self.ax.yaxis.set_major_formatter(HickoryScalarFormatter())
+
+        self.ax.set(**axis_kw)
+
+        self.aratio = aratio
+        self._set_legend(legend)
+
+    def _set_legend(self, legend):
+        """
+        set the legend
+
+        Parameters
+        ----------
+        legend: Legend or bool
+            If a boolean True, the legend is auto-generated.  For more control
+            send a Legend instance.
+        """
+        if legend is True:
+            self._legend = Legend()
+        elif legend:
+            # we got something that wasn't False, we'll let
+            # duck typing do its thing
+            self._legend = legend
+        else:
+            self._legend = None
+
+    def legend(self, *args, **kw):
+        self.axes[0].legend(*args, **kw)
+
+    def __getattr__(self, name):
+        """
+        pass on calls to the axis, e.g. making a plot
+        """
+        return getattr(self.ax, name)
+
+
+class _PlotContainerOld(object):
+    """
+    over-ride the show and savefig methods.
+
+    Showing does does not use one of the toolkit backends from matplotlib, but
+    rather Tkinter, and thus hickory can be imported with and without a
+    display, yet can still provide a plot display, unlike matplotlib which will
+    crash if you have set a toolkit backend but no display is present.
+    """
+    def show(self, dpi=None, fork=False):
+        """
+        Show the plot on the display.  Requires tkinter and pillow/PIL to be
+        installed and able to connect to a display
+
+        Parameters
+        ----------
+        dpi: float, optional
+            Optional dpi for image file formats such as png
+        fork: bool, optional
+            If fork is set to True, the plot will "go in the background"
+            in a separate thread.  This allows the program to continue,
+            and users in interactive sessions to do other work, with
+            the plot remaining visible.
+        """
+
+        if dpi is not None:
+            # need to do it here or else bbox is wrong after savefig (does not
+            # store it permanently)
+            self.axes[0].set_dpi(dpi)
 
         if self._legend:
             self.legend(*self._legend.args, **self._legend.kw)
@@ -132,7 +361,7 @@ class _PlotContainer(object):
         return plt
 
 
-class Plot(_PlotContainer, mplt.Figure):
+class PlotOld(_PlotContainer, mplt.Figure):
     """
     A plot container.  This class provides an interface to both
     the Figure and axis functionality in one.
